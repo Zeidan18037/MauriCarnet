@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: oklch(0.98 0 0);
+  --color-foreground: oklch(0.15 0 0);
+  --color-primary: oklch(0.45 0.15 145);
+  --color-primary-dark: oklch(0.38 0.13 145);
+  --color-danger: oklch(0.55 0.18 25);
+  --color-success: oklch(0.55 0.15 145);
+  --color-card: oklch(1 0 0);
+  --color-border: oklch(0.9 0 0);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+input, select, textarea, button {
+  font-family: var(--font-sans);
+}
