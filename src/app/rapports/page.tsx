@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { calculerROI, type ResultatROI, type ChargesFixes } from "@/lib/roi";
 import { getProduits, getClients } from "@/lib/crud";
+import { useTranslation } from "@/lib/i18n";
 
 const CHARGES_PAR_DEFAUT: ChargesFixes = {
   loyer: 0,
@@ -12,6 +13,7 @@ const CHARGES_PAR_DEFAUT: ChargesFixes = {
 };
 
 export default function RapportsPage() {
+  const { t } = useTranslation();
   const [resultat, setResultat] = useState<ResultatROI | null>(null);
   const [charges, setCharges] = useState<ChargesFixes>(CHARGES_PAR_DEFAUT);
   const [nbProduits, setNbProduits] = useState(0);
@@ -29,7 +31,7 @@ export default function RapportsPage() {
 
   return (
     <div className="p-4 pb-24">
-      <h1 className="text-2xl font-bold mb-4">Rapports</h1>
+      <h1 className="text-2xl font-bold mb-4">{t("rapports.title")}</h1>
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         <StatCard label="Produits" value={nbProduits} icon="📦" />
@@ -37,10 +39,10 @@ export default function RapportsPage() {
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-4 mb-4">
-        <h2 className="font-bold mb-3">Charges fixes (mensuelles)</h2>
+        <h2 className="font-bold mb-3">{t("rapports.charges_fixes")}</h2>
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <ChargeInput label="Loyer" value={charges.loyer} onChange={(v) => setCharges((c) => ({ ...c, loyer: v }))} />
-          <ChargeInput label="Electricité" value={charges.electricite} onChange={(v) => setCharges((c) => ({ ...c, electricite: v }))} />
+          <ChargeInput label={t("rapports.loyer")} value={charges.loyer} onChange={(v) => setCharges((c) => ({ ...c, loyer: v }))} />
+          <ChargeInput label={t("rapports.electricite")} value={charges.electricite} onChange={(v) => setCharges((c) => ({ ...c, electricite: v }))} />
           <ChargeInput label="Salaires" value={charges.salaires} onChange={(v) => setCharges((c) => ({ ...c, salaires: v }))} />
           <ChargeInput label="Autres" value={charges.autres} onChange={(v) => setCharges((c) => ({ ...c, autres: v }))} />
         </div>
@@ -48,23 +50,23 @@ export default function RapportsPage() {
           onClick={handleCalculer}
           className="w-full py-3 bg-primary text-white rounded-xl font-semibold"
         >
-          Calculer le ROI
+          {t("rapports.calculer")} {t("rapports.roi")}
         </button>
       </div>
 
       {resultat && (
         <div className="bg-card border border-border rounded-2xl p-4">
-          <h2 className="font-bold mb-3">Résultat</h2>
+          <h2 className="font-bold mb-3">{t("rapports.resultat")}</h2>
           <div className="space-y-2 mb-4">
             <Ligne label="Marge brute totale" value={`${resultat.marge_brute_totale} MRU`} />
-            <Ligne label="Charges fixes" value={`-${resultat.charges_fixes} MRU`} />
+            <Ligne label={t("rapports.charges_fixes")} value={`-${resultat.charges_fixes} MRU`} />
             <div className="h-px bg-border" />
             <Ligne
-              label="ROI net"
+              label={`${t("rapports.roi")} net`}
               value={`${resultat.roi_net} MRU`}
               color={resultat.rentable ? "text-success" : "text-danger"}
             />
-            <Ligne label="Ratio ROI" value={`${resultat.ratio_roi_pourcent}%`} />
+            <Ligne label={`Ratio ${t("rapports.roi")}`} value={`${resultat.ratio_roi_pourcent}%`} />
           </div>
 
           {Object.keys(resultat.par_produit).length > 0 && (
@@ -83,7 +85,7 @@ export default function RapportsPage() {
 
       {!resultat && (
         <p className="text-center text-foreground/50 py-6">
-          Configurez les charges fixes et cliquez sur Calculer.
+          Configurez les {t("rapports.charges_fixes")} et cliquez sur {t("rapports.calculer")}.
         </p>
       )}
     </div>

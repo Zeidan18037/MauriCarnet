@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { getTransactionsNonSynced, marquerSyncede } from "./crud";
-import { db } from "./db";
+import { getDB } from "./db";
 
 export async function synchroniser(): Promise<{ ok: number; echec: number }> {
   const transactions = await getTransactionsNonSynced();
@@ -14,6 +14,7 @@ export async function synchroniser(): Promise<{ ok: number; echec: number }> {
       type: t.type,
       montant_paye: t.montant_paye,
       reste_a_payer: t.reste_a_payer,
+      quantite: t.quantite,
       timestamp: t.timestamp.toISOString(),
     });
 
@@ -37,7 +38,7 @@ export async function synchroniserDepuisSupabase(): Promise<void> {
   }
 
   for (const p of data ?? []) {
-    await db.produits.put({
+    await getDB().produits.put({
       id: p.id,
       nom: p.nom,
       prix_achat: p.prix_achat,

@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import BottomNav from "@/components/BottomNav";
+import AuthGate from "@/components/AuthGate";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { LocaleProvider } from "@/lib/i18n";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MauriCarnet",
   description: "Gestion des ventes et du carnet de dettes pour les boutiques en Mauritanie",
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -40,13 +44,21 @@ export default function RootLayout({
     <html
       lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body className="min-h-full flex flex-col pb-20">
-        {children}
-        <BottomNav />
+        <AuthProvider>
+          <LocaleProvider>
+            <AuthGate>
+              {children}
+              <ServiceWorkerRegistration />
+              <BottomNav />
+            </AuthGate>
+          </LocaleProvider>
+        </AuthProvider>
       </body>
     </html>
   );

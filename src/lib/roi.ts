@@ -1,4 +1,5 @@
-import { db } from "./db";
+import { getDB } from "./db";
+const db = () => getDB();
 
 export interface ChargesFixes {
   loyer: number;
@@ -25,8 +26,8 @@ export async function calculerROI(
   depuis?: Date,
   jusqua?: Date
 ): Promise<ResultatROI> {
-  const transactions = await db.transactions.toArray();
-  const produits = await db.produits.toArray();
+  const transactions = await db().transactions.toArray();
+  const produits = await db().produits.toArray();
 
   const debut = depuis ?? new Date(0);
   const fin = jusqua ?? new Date();
@@ -43,7 +44,7 @@ export async function calculerROI(
   for (const t of filtrees) {
     const p = mapProduits.get(t.produit_id);
     if (!p) continue;
-    const marge = (p.prix_vente - p.prix_achat);
+    const marge = (p.prix_vente - p.prix_achat) * t.quantite;
     margeTotale += marge;
     parProduit[p.nom] = (parProduit[p.nom] ?? 0) + marge;
   }

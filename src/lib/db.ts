@@ -1,5 +1,11 @@
 import Dexie, { type Table } from "dexie";
 
+export interface Categorie {
+  id?: number;
+  nom: string;
+  icone: string;
+}
+
 export interface Produit {
   id?: number;
   nom: string;
@@ -7,6 +13,7 @@ export interface Produit {
   prix_vente: number;
   stock_actuel: number;
   icone: string;
+  categorie_id?: number;
 }
 
 export interface Client {
@@ -23,23 +30,45 @@ export interface Transaction {
   type: "cash" | "dette";
   montant_paye: number;
   reste_a_payer: number;
+  quantite: number;
   timestamp: Date;
-  synced: number;
+  synced?: number;
 }
 
+export interface User {
+  id?: number;
+  username: string;
+  pin_hash: string;
+  created_at: Date;
+}
+
+let db: MauriCarnetDB | null = null;
+
 class MauriCarnetDB extends Dexie {
+  categories!: Table<Categorie, number>;
   produits!: Table<Produit, number>;
   clients!: Table<Client, number>;
   transactions!: Table<Transaction, number>;
+  users!: Table<User, number>;
 
   constructor() {
     super("MauriCarnetDB");
-    this.version(1).stores({
+    this.version(3).stores({
+      categories: "++id, nom",
       produits: "++id, nom",
       clients: "++id, nom, telephone",
       transactions: "++id, produit_id, client_id, type, timestamp, synced",
+      users: "++id, &username",
     });
   }
 }
 
-export const db = new MauriCarnetDB();
+export function getDB(): MauriCarnetDB {
+  if (typeof window === "undefined") {
+    throw new Error("Dexie ne peut pas être utilisé côté serveur");
+  }
+  if (!db) {
+    db = new MauriCarnetDB();
+  }
+  return db;
+}

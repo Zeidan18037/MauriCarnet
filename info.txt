@@ -1,0 +1,46 @@
+==== CONTEXT JOURNAL — MauriCarnet ====
+
+== DONE ==
+- Init Next.js 16 + Tailwind + TS
+- Supabase + Dexie (lazy init getDB())
+- CRUD produits, clients, transactions
+- BottomNav (💰📦👥)
+- PWA (manifest, sw.js)
+- Sync IndexedDB → Supabase
+- ROI dashboard (rapports/)
+- ✓ Finaliser btn in modals (replaced big submit btn)
+- Stock: validation + deduction + 0 display
+- Debt: auto-track reste_a_payer → client.total_dette
+- recalculerDettes() on clients page load
+- Client required for dette transactions
+- quantite field added to Transaction type + Supabase schema
+- Deployed on Vercel (mauricarnet.vercel.app)
+
+== PENDING ==
+- Auth (Supabase Auth + login pages) — not started
+- Schema: ALTER TABLE transactions ADD COLUMN quantite INTEGER NOT NULL DEFAULT 0; (user must run on Supabase)
+
+== CURRENT FIXES (this session) ==
+- Dashboard page: missing pb-24 → content hidden behind BottomNav
+- Clients page: show total cash (all type="cash" montant_paye sum) alongside total debts
+- All modals: bottom-sheet (items-end) → centered popup (items-center justify-center) to avoid BottomNav overlap
+  Files affected: produits/page.tsx, clients/page.tsx, ventes/page.tsx
+
+== FILE TREE KEY ==
+src/
+  app/
+    page.tsx          → Dashboard (cards)
+    ventes/page.tsx   → Transactions list + NouvelleVenteModal + EditTransactionForm
+    produits/page.tsx → Produits list + form modal
+    clients/page.tsx  → Clients list + form modal + detail modal + payer
+    rapports/page.tsx → ROI dashboard
+    layout.tsx        → RootLayout (body pb-20 + BottomNav)
+    api/sync/route.ts → Sync endpoint
+  lib/
+    db.ts       → Dexie schema (Produit, Client, Transaction) + getDB()
+    crud.ts     → CRUD + verifierStock + recalculerDettes
+    sync.ts     → Sync to/from Supabase
+    roi.ts      → ROI calculation
+    supabase.ts → Supabase client
+  components/
+    BottomNav.tsx → Fixed bottom nav (Ventes, Produits, Clients)

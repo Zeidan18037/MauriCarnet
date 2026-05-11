@@ -7,7 +7,7 @@ const csp = [
   "connect-src 'self' https://*.supabase.co",
   "img-src 'self' data: blob:",
   "manifest-src 'self'",
-  "worker-src 'self'",
+  "worker-src 'self' blob:",
 ].join("; ");
 
 const nextConfig: NextConfig = {

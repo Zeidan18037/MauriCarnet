@@ -1,21 +1,26 @@
+"use client";
+
+import { useTranslation } from "@/lib/i18n";
+
 export default function Dashboard() {
+  const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 pb-24">
       <div className="text-5xl mb-4">📒</div>
-      <h1 className="text-3xl font-bold mb-1">MauriCarnet</h1>
+      <h1 className="text-3xl font-bold mb-1">{t("dashboard.title")}</h1>
       <p className="text-base text-foreground/60 mb-8">
-        Gestion des ventes et du carnet de dettes
+        {t("dashboard.subtitle")}
       </p>
 
       <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-        <DashboardCard href="/ventes" icon="💰" label="Ventes" sub="Nouvelle vente" />
-        <DashboardCard href="/produits" icon="📦" label="Produits" sub="Gérer le stock" />
-        <DashboardCard href="/clients" icon="👥" label="Clients" sub="Carnet de dettes" />
+        <DashboardCard href="/ventes" icon="💰" label={t("dashboard.ventes")} sub={t("dashboard.sub_ventes")} />
+        <DashboardCard href="/produits" icon="📦" label={t("dashboard.produits")} sub={t("dashboard.sub_produits")} />
+        <DashboardCard href="/clients" icon="👥" label={t("dashboard.clients")} sub={t("dashboard.sub_clients")} />
         <DashboardCard
           href="/rapports"
           icon="📊"
-          label="Rapports"
-          sub="ROI & stats"
+          label={t("dashboard.rapports")}
+          sub={t("dashboard.sub_rapports")}
         />
       </div>
     </div>

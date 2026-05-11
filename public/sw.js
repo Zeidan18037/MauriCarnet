@@ -52,9 +52,20 @@ async function syncData() {
       client.postMessage({ type: "SYNC_START" })
     );
 
+    const token = await new Promise((resolve) => {
+      const handleMessage = (event) => {
+        if (event.data?.type === "SW_TOKEN") {
+          self.removeEventListener("message", handleMessage);
+          resolve(event.data.token);
+        }
+      };
+      self.addEventListener("message", handleMessage);
+      setTimeout(() => resolve(null), 2000);
+    });
+
     const response = await fetch("/api/sync", {
       method: "POST",
-      headers: { "Authorization": "Bearer sync-worker" },
+      headers: { "Authorization": `Bearer ${token || ""}` },
     });
 
     const ok = response.ok;
@@ -65,3 +76,13 @@ async function syncData() {
     console.error("Sync échouée", err);
   }
 }
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SET_TOKEN") {
+    self.clients.matchAll().then((clients) => {
+      clients.forEach((client) =>
+        client.postMessage({ type: "SW_TOKEN", token: event.data.token })
+      );
+    });
+  }
+});
