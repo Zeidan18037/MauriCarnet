@@ -9,6 +9,7 @@ export async function synchroniser(userId: number): Promise<{ ok: number; echec:
 
   for (const t of transactions) {
     const { error } = await supabase.from("transactions").insert({
+      user_id: userId,
       produit_id: t.produit_id,
       client_id: t.client_id ?? null,
       type: t.type,

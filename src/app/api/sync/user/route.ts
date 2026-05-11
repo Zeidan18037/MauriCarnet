@@ -14,8 +14,17 @@ export async function POST(request: Request) {
   }
 
   const { username, created_at } = await request.json();
-  if (!username) {
-    return NextResponse.json({ error: "username requis" }, { status: 400 });
+
+  if (!username || typeof username !== "string" || username.length < 2) {
+    return NextResponse.json({ error: "username requis (min 2 caractères)" }, { status: 400 });
+  }
+
+  if (username.length > 50) {
+    return NextResponse.json({ error: "username trop long (max 50)" }, { status: 400 });
+  }
+
+  if (!/^[a-zA-Z0-9\s\-_À-ÿ]+$/.test(username)) {
+    return NextResponse.json({ error: "username contient des caractères non autorisés" }, { status: 400 });
   }
 
   const supabase = createClient(

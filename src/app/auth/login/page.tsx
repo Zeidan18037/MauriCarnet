@@ -20,9 +20,9 @@ export default function LoginPage() {
       setError(t("auth.erreur_champs"));
       return;
     }
-    const ok = await login(username, pin);
-    if (ok) router.push("/");
-    else setError("Nom d'utilisateur ou code PIN incorrect");
+    const err = await login(username, pin);
+    if (err) setError(err);
+    else router.push("/");
   }
 
   return (

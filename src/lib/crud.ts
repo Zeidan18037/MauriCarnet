@@ -256,13 +256,79 @@ export async function recalculerDettes(userId: number): Promise<void> {
 
 /* ───── Auth ───── */
 
+const LOGIN_ATTEMPT_KEY = "mauricarnet_login_attempts";
+
+export function checkLoginRateLimit(username: string): number {
+  try {
+    const data = JSON.parse(localStorage.getItem(LOGIN_ATTEMPT_KEY) || "{}");
+    const entry = data[username];
+    if (!entry) return 0;
+    if (Date.now() - entry.last > 300000) {
+      delete data[username];
+      localStorage.setItem(LOGIN_ATTEMPT_KEY, JSON.stringify(data));
+      return 0;
+    }
+    if (entry.count >= 3) {
+      const wait = Math.min(60, Math.pow(2, entry.count - 3));
+      const elapsed = (Date.now() - entry.last) / 1000;
+      if (elapsed < wait) return Math.ceil(wait - elapsed);
+    }
+    return 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function recordLoginAttempt(username: string, success: boolean): void {
+  try {
+    const data = JSON.parse(localStorage.getItem(LOGIN_ATTEMPT_KEY) || "{}");
+    if (success) {
+      delete data[username];
+    } else {
+      const entry = data[username] || { count: 0, last: 0 };
+      entry.count++;
+      entry.last = Date.now();
+      data[username] = entry;
+    }
+    localStorage.setItem(LOGIN_ATTEMPT_KEY, JSON.stringify(data));
+  } catch {}
+}
+
 export async function hashPin(pin: string): Promise<string> {
+  const salt = crypto.randomUUID();
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", encoder.encode(pin), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: encoder.encode(salt), iterations: 100000, hash: "SHA-256" },
+    key, 256
+  );
+  const hash = Array.from(new Uint8Array(bits))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `${salt}:${hash}`;
+}
+
+export async function verifyPin(pin: string, stored: string): Promise<boolean> {
+  if (stored.includes(":")) {
+    const [salt, expected] = stored.split(":");
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey("raw", encoder.encode(pin), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits(
+      { name: "PBKDF2", salt: encoder.encode(salt), iterations: 100000, hash: "SHA-256" },
+      key, 256
+    );
+    const hash = Array.from(new Uint8Array(bits))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    return hash === expected;
+  }
   const encoder = new TextEncoder();
   const data = encoder.encode(pin + "-mauricarnet-v1");
   const hash = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hash))
+  const hex = Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+  return hex === stored;
 }
 
 export async function registerUser(
@@ -284,13 +350,57 @@ export async function loginUser(
   username: string,
   pin: string
 ): Promise<User | null> {
+  const wait = checkLoginRateLimit(username);
+  if (wait > 0) throw new Error(`Trop de tentatives. Réessayez dans ${wait} seconde(s).`);
+
   const user = await d().users.where("username").equals(username).first();
-  if (!user) return null;
-  const pin_hash = await hashPin(pin);
-  if (user.pin_hash !== pin_hash) return null;
+  if (!user) {
+    recordLoginAttempt(username, false);
+    return null;
+  }
+
+  const ok = await verifyPin(pin, user.pin_hash);
+  if (!ok) {
+    recordLoginAttempt(username, false);
+    return null;
+  }
+
+  recordLoginAttempt(username, true);
+
+  if (!user.pin_hash.includes(":")) {
+    const newHash = await hashPin(pin);
+    await d().users.update(user.id!, { pin_hash: newHash });
+  }
+
   return user;
 }
 
 export async function getUsersCount(): Promise<number> {
   return d().users.count();
+}
+
+const SESSION_TIMEOUT_MS = 15 * 60 * 1000;
+
+export function getSessionTimeout(): number {
+  return SESSION_TIMEOUT_MS;
+}
+
+export function getCurrentSession(): { id: number; username: string } | null {
+  try {
+    const saved = localStorage.getItem("mauricarnet_user");
+    if (!saved) return null;
+    const session = JSON.parse(saved);
+    if (session && typeof session.id === "number") {
+      const stored = localStorage.getItem("mauricarnet_session_start");
+      if (stored && Date.now() - parseInt(stored) > SESSION_TIMEOUT_MS) {
+        localStorage.removeItem("mauricarnet_user");
+        localStorage.removeItem("mauricarnet_session_start");
+        return null;
+      }
+      return { id: session.id, username: session.username };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
