@@ -1,4 +1,5 @@
 const fr: Record<string, string> = {
+  "nav.dashboard": "Résultats",
   "nav.ventes": "Ventes",
   "nav.produits": "Produits",
   "nav.clients": "Clients",
@@ -49,6 +50,7 @@ const fr: Record<string, string> = {
   "produits.prix_achat": "Prix achat",
   "produits.prix_vente": "Prix vente",
   "produits.categorie": "Catégorie (optionnelle)",
+  "produits.general": "Général",
   "produits.achat_vente_stock": "Achat: {achat} | Vente: {vente} | Stock: {stock}",
 
   "clients.title": "Clients",
@@ -117,6 +119,14 @@ const fr: Record<string, string> = {
   "rapports.electricite": "Électricité",
   "rapports.calculer": "Calculer",
   "rapports.resultat": "Résultat",
+
+  "dashboard.cash": "Ventes",
+  "dashboard.dettes": "Dettes",
+  "dashboard.profit": "Profit",
+  "dashboard.produits_vendus": "Produits vendus",
+  "dashboard.top_produits": "🔥 Top produits",
+  "dashboard.top_dettes": "👥 Dettes en cours",
+  "dashboard.aucune_transaction": "Aucune transaction sur cette période",
 };
 
 export default fr;

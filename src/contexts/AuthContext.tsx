@@ -10,6 +10,7 @@ import {
 } from "react";
 import { registerUser, loginUser, getUsersCount, getSessionTimeout } from "@/lib/crud";
 import { synchroniserUtilisateur } from "@/lib/sync";
+import { initKey, clearKey } from "@/lib/crypto";
 import type { User } from "@/lib/db";
 
 interface AuthCtx {
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     setUser(null);
+    clearKey();
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(SESSION_START_KEY);
   }, []);
@@ -92,6 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(u);
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
           localStorage.setItem(SESSION_START_KEY, String(Date.now()));
+          const salt = localStorage.getItem("mauricarnet_enc_salt") || "";
+          initKey(pin, salt || username);
           synchroniserUtilisateur(u);
           return null;
         }
@@ -110,6 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(u);
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
         localStorage.setItem(SESSION_START_KEY, String(Date.now()));
+        const salt = crypto.randomUUID();
+        localStorage.setItem("mauricarnet_enc_salt", salt);
+        initKey(pin, salt);
         synchroniserUtilisateur(u);
         return null;
       } catch (err: any) {

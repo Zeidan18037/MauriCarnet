@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 const navItems = [
+  { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
   { labelKey: "nav.ventes", href: "/ventes", icon: "💰" },
   { labelKey: "nav.produits", href: "/produits", icon: "📦" },
   { labelKey: "nav.clients", href: "/clients", icon: "👥" },

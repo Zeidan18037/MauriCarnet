@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import BottomNav from "@/components/BottomNav";
+import SwipeNav from "@/components/SwipeNav";
 import AuthGate from "@/components/AuthGate";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LocaleProvider } from "@/lib/i18n";
@@ -55,6 +56,7 @@ export default function RootLayout({
             <AuthGate>
               {children}
               <ServiceWorkerRegistration />
+              <SwipeNav />
               <BottomNav />
             </AuthGate>
           </LocaleProvider>

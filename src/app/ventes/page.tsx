@@ -15,6 +15,7 @@ import {
   getCategories,
   seedCategoriesIfEmpty,
   migrerAnciennesDonnees,
+  getCategorieName,
 } from "@/lib/crud";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Produit, Client, Transaction, Categorie } from "@/lib/db";
@@ -40,7 +41,7 @@ export default function VentesPage() {
   const [periode, setPeriode] = useState<Periode>("today");
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { user } = useAuth();
   const uid = user?.id ?? 0;
 
@@ -337,7 +338,7 @@ function NouvelleVenteModal({
   const [suggestions, setSuggestions] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { user } = useAuth();
   const uid = user?.id ?? 0;
 
@@ -489,8 +490,8 @@ function NouvelleVenteModal({
                     grouped.get(key)!.push(p);
                   }
                   const ordre = [...grouped.keys()].sort((a, b) => {
-                    const na = a ? mapCat.get(a)?.nom ?? "" : "Général";
-                    const nb = b ? mapCat.get(b)?.nom ?? "" : "Général";
+                    const na = a ? getCategorieName(mapCat.get(a), locale, "") : "";
+                    const nb = b ? getCategorieName(mapCat.get(b), locale, "") : "";
                     return na.localeCompare(nb);
                   });
                   return ordre.map((key) => {
@@ -499,7 +500,7 @@ function NouvelleVenteModal({
                     return (
                       <div key={key ?? "gen"} className="mb-4">
                         <h4 className="text-xs font-bold text-foreground/50 uppercase tracking-wide mb-2">
-                          {cat ? `${cat.icone} ${cat.nom}` : "📦 Général"}
+                          {cat ? `${cat.icone} ${getCategorieName(cat, locale)}` : t("produits.general")}
                         </h4>
                         <div className="grid grid-cols-3 gap-2">
                           {items.map((p) => (

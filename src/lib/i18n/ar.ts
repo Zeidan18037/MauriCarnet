@@ -1,4 +1,5 @@
 const ar: Record<string, string> = {
+  "nav.dashboard": "النتائج",
   "nav.ventes": "المبيعات",
   "nav.produits": "المنتجات",
   "nav.clients": "العملاء",
@@ -49,6 +50,7 @@ const ar: Record<string, string> = {
   "produits.prix_achat": "سعر الشراء",
   "produits.prix_vente": "سعر البيع",
   "produits.categorie": "الفئة (اختياري)",
+  "produits.general": "عام",
   "produits.achat_vente_stock": "شراء: {achat} | بيع: {vente} | مخزون: {stock}",
 
   "clients.title": "العملاء",
@@ -117,6 +119,14 @@ const ar: Record<string, string> = {
   "rapports.electricite": "الكهرباء",
   "rapports.calculer": "حساب",
   "rapports.resultat": "النتيجة",
+
+  "dashboard.cash": "المبيعات",
+  "dashboard.dettes": "الديون",
+  "dashboard.profit": "الربح",
+  "dashboard.produits_vendus": "المنتجات المباعة",
+  "dashboard.top_produits": "🔥 أفضل المنتجات",
+  "dashboard.top_dettes": "👥 الديون الجارية",
+  "dashboard.aucune_transaction": "لا توجد معاملات في هذه الفترة",
 };
 
 export default ar;

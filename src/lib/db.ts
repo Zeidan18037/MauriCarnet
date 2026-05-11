@@ -4,6 +4,7 @@ export interface Categorie {
   id?: number;
   user_id: number;
   nom: string;
+  nom_ar?: string;
   icone: string;
 }
 

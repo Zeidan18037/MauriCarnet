@@ -10,6 +10,7 @@ import {
   getCategories,
   seedCategoriesIfEmpty,
   migrerAnciennesDonnees,
+  getCategorieName,
 } from "@/lib/crud";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Produit, Categorie } from "@/lib/db";
@@ -17,7 +18,7 @@ import type { Produit, Categorie } from "@/lib/db";
 const ICONES = ["📦", "🥛", "🍞", "🧃", "🍚", "🫘", "🧂", "🫒", "🥜", "🍬", "🧴", "🪥"];
 
 export default function ProduitsPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { user } = useAuth();
   const uid = user?.id ?? 0;
   const [produits, setProduits] = useState<Produit[]>([]);
@@ -116,8 +117,8 @@ export default function ProduitsPage() {
     grouped.get(key)!.push(p);
   }
   const ordreCats = [...grouped.keys()].sort((a, b) => {
-    const na = a ? mapCategorie.get(a)?.nom ?? "" : "Général";
-    const nb = b ? mapCategorie.get(b)?.nom ?? "" : "Général";
+    const na = a ? getCategorieName(mapCategorie.get(a), locale, "") : "";
+    const nb = b ? getCategorieName(mapCategorie.get(b), locale, "") : "";
     return na.localeCompare(nb);
   });
 
@@ -145,7 +146,7 @@ export default function ProduitsPage() {
         return (
           <div key={key ?? "undefined"} className="mb-4">
             <h3 className="text-sm font-bold text-foreground/60 uppercase tracking-wide mb-2">
-              {cat ? `${cat.icone} ${cat.nom}` : "📦 Général"}
+              {cat ? `${cat.icone} ${getCategorieName(cat, locale)}` : t("produits.general")}
             </h3>
             <div className="flex flex-col gap-2">
               {items.map((p) => (
@@ -222,7 +223,7 @@ export default function ProduitsPage() {
               <option value="">{t("produits.categorie")}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id!}>
-                  {c.icone} {c.nom}
+                  {c.icone} {getCategorieName(c, locale)}
                 </option>
               ))}
             </select>

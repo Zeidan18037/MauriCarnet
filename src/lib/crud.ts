@@ -1,7 +1,29 @@
 import { getDB, type Categorie, type Produit, type Client, type Transaction, type User } from "./db";
+import { encrypt, decrypt, isKeyReady } from "./crypto";
 
 function d() {
   return getDB();
+}
+
+const PRODUIT_ENC_FIELDS = ["nom", "icone"] as const;
+const CLIENT_ENC_FIELDS = ["nom", "telephone"] as const;
+
+async function encryptFields<T extends Record<string, any>>(obj: T, fields: readonly (keyof T)[]): Promise<T> {
+  if (!isKeyReady()) return obj;
+  const r = { ...obj };
+  for (const f of fields) {
+    if (r[f] !== undefined && r[f] !== null) r[f] = (await encrypt(String(r[f]))) as any;
+  }
+  return r;
+}
+
+async function decryptFields<T extends Record<string, any>>(obj: T, fields: readonly (keyof T)[]): Promise<T> {
+  if (!isKeyReady()) return obj;
+  const r = { ...obj };
+  for (const f of fields) {
+    if (r[f] !== undefined && r[f] !== null) try { r[f] = (await decrypt(String(r[f]))) as any; } catch {}
+  }
+  return r;
 }
 
 /* ───── Migration ───── */
@@ -20,24 +42,26 @@ export async function migrerAnciennesDonnees(userId: number): Promise<void> {
 /* ───── Produits ───── */
 
 export async function getProduits(userId: number): Promise<Produit[]> {
-  return d().produits.where("user_id").equals(userId).toArray();
+  const rows = await d().produits.where("user_id").equals(userId).toArray();
+  return Promise.all(rows.map((r) => decryptFields(r, PRODUIT_ENC_FIELDS)));
 }
 
 export async function getProduit(id: number): Promise<Produit | undefined> {
-  return d().produits.get(id);
+  const r = await d().produits.get(id);
+  return r ? decryptFields(r, PRODUIT_ENC_FIELDS) : undefined;
 }
 
 export async function ajouterProduit(
   p: Omit<Produit, "id"> & { user_id: number }
 ): Promise<number> {
-  return d().produits.add(p as Produit);
+  return d().produits.add((await encryptFields(p, PRODUIT_ENC_FIELDS)) as Produit);
 }
 
 export async function modifierProduit(
   id: number,
   p: Partial<Produit>
 ): Promise<number> {
-  return d().produits.update(id, p);
+  return d().produits.update(id, await encryptFields(p, PRODUIT_ENC_FIELDS));
 }
 
 export async function supprimerProduit(id: number): Promise<void> {
@@ -47,24 +71,26 @@ export async function supprimerProduit(id: number): Promise<void> {
 /* ───── Clients ───── */
 
 export async function getClients(userId: number): Promise<Client[]> {
-  return d().clients.where("user_id").equals(userId).toArray();
+  const rows = await d().clients.where("user_id").equals(userId).toArray();
+  return Promise.all(rows.map((r) => decryptFields(r, CLIENT_ENC_FIELDS)));
 }
 
 export async function getClient(id: number): Promise<Client | undefined> {
-  return d().clients.get(id);
+  const r = await d().clients.get(id);
+  return r ? decryptFields(r, CLIENT_ENC_FIELDS) : undefined;
 }
 
 export async function ajouterClient(
   c: Omit<Client, "id"> & { user_id: number }
 ): Promise<number> {
-  return d().clients.add(c as Client);
+  return d().clients.add((await encryptFields(c, CLIENT_ENC_FIELDS)) as Client);
 }
 
 export async function modifierClient(
   id: number,
   c: Partial<Client>
 ): Promise<number> {
-  return d().clients.update(id, c);
+  return d().clients.update(id, await encryptFields(c, CLIENT_ENC_FIELDS));
 }
 
 export async function supprimerClient(id: number): Promise<void> {
@@ -76,27 +102,32 @@ export async function chercherClients(
   userId: number
 ): Promise<Client[]> {
   if (!query) return [];
-  return d()
-    .clients
-    .where("user_id").equals(userId)
-    .filter((c) => c.nom.toLowerCase().includes(query.toLowerCase()))
-    .toArray();
+  const all = await d().clients.where("user_id").equals(userId).toArray();
+  const decrypted = await Promise.all(all.map((r) => decryptFields(r, CLIENT_ENC_FIELDS)));
+  return decrypted.filter((c) =>
+    c.nom.toLowerCase().includes(query.toLowerCase())
+  );
 }
 
 /* ───── Catégories ───── */
 
+export function getCategorieName(cat: Categorie | null | undefined, locale: string, fallback = "Général"): string {
+  if (!cat) return fallback;
+  return locale === "ar" && cat.nom_ar ? cat.nom_ar : cat.nom;
+}
+
 export const CATEGORIES_PAR_DEFAUT: Omit<Categorie, "id">[] = [
-  { nom: "Général", icone: "📦", user_id: 0 },
-  { nom: "Fruits & Légumes", icone: "🍎🍌🥕", user_id: 0 },
-  { nom: "Boissons", icone: "🥤🧃☕", user_id: 0 },
-  { nom: "Lait & Fromage", icone: "🥛🧀", user_id: 0 },
-  { nom: "Pain & Boulangerie", icone: "🍞🥖🥐", user_id: 0 },
-  { nom: "Épicerie", icone: "🍚🧂🫘", user_id: 0 },
-  { nom: "Hygiène & Beauté", icone: "🧴🪥🧼", user_id: 0 },
-  { nom: "Ménage", icone: "🧹🧽", user_id: 0 },
-  { nom: "Outils", icone: "🔧🔨🪛", user_id: 0 },
-  { nom: "Snacks & Sucreries", icone: "🍬🍫🍪", user_id: 0 },
-  { nom: "Surgelés", icone: "❄️🥩🧊", user_id: 0 },
+  { nom: "Général", nom_ar: "عام", icone: "📦", user_id: 0 },
+  { nom: "Fruits & Légumes", nom_ar: "فواكه وخضروات", icone: "🍎🍌🥕", user_id: 0 },
+  { nom: "Boissons", nom_ar: "مشروبات", icone: "🥤🧃☕", user_id: 0 },
+  { nom: "Lait & Fromage", nom_ar: "حليب وجبن", icone: "🥛🧀", user_id: 0 },
+  { nom: "Pain & Boulangerie", nom_ar: "خبز ومخبوزات", icone: "🍞🥖🥐", user_id: 0 },
+  { nom: "Épicerie", nom_ar: "مواد غذائية", icone: "🍚🧂🫘", user_id: 0 },
+  { nom: "Hygiène & Beauté", nom_ar: "نظافة وتجميل", icone: "🧴🪥🧼", user_id: 0 },
+  { nom: "Ménage", nom_ar: "منظفات", icone: "🧹🧽", user_id: 0 },
+  { nom: "Outils", nom_ar: "أدوات", icone: "🔧🔨🪛", user_id: 0 },
+  { nom: "Snacks & Sucreries", nom_ar: "وجبات خفيفة وحلويات", icone: "🍬🍫🍪", user_id: 0 },
+  { nom: "Surgelés", nom_ar: "مجمدات", icone: "❄️🥩🧊", user_id: 0 },
 ];
 
 export async function getCategories(userId: number): Promise<Categorie[]> {
