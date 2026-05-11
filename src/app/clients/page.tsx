@@ -14,6 +14,7 @@ import {
   migrerAnciennesDonnees,
 } from "@/lib/crud";
 import { useAuth } from "@/contexts/AuthContext";
+import { synchroniser } from "@/lib/sync";
 import type { Client, Transaction } from "@/lib/db";
 
 type Periode = "today" | "month" | "year";
@@ -59,6 +60,7 @@ export default function ClientsPage() {
     const [clts, txs] = await Promise.all([getClients(uid), getTransactions(uid)]);
     setClients(clts);
     setAllTransactions(txs);
+    synchroniser(uid);
   };
 
   useEffect(() => {

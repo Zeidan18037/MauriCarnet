@@ -18,6 +18,7 @@ import {
   getCategorieName,
 } from "@/lib/crud";
 import { useAuth } from "@/contexts/AuthContext";
+import { synchroniser } from "@/lib/sync";
 import type { Produit, Client, Transaction, Categorie } from "@/lib/db";
 
 type FormMode = "new" | "edit";
@@ -60,6 +61,7 @@ export default function VentesPage() {
     setClients(clts);
     setCategories(cats);
     setLoading(false);
+    synchroniser(uid);
   };
 
   useEffect(() => {
