@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { registerUser, loginUser, getUsersCount } from "@/lib/crud";
+import { synchroniserUtilisateur } from "@/lib/sync";
 import type { User } from "@/lib/db";
 
 interface AuthCtx {
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (u) {
         setUser(u);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+        synchroniserUtilisateur(u);
         return true;
       }
       return false;
@@ -72,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const u = await registerUser(username, pin);
         setUser(u);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+        synchroniserUtilisateur(u);
         return null;
       } catch (err: any) {
         return err.message ?? "Erreur lors de l'inscription";

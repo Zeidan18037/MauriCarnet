@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { getTransactionsNonSynced, marquerSyncede } from "./crud";
-import { getDB } from "./db";
+import { getDB, type User } from "./db";
 
 export async function synchroniser(): Promise<{ ok: number; echec: number }> {
   const transactions = await getTransactionsNonSynced();
@@ -28,6 +28,31 @@ export async function synchroniser(): Promise<{ ok: number; echec: number }> {
   }
 
   return { ok, echec };
+}
+
+export async function synchroniserUtilisateur(u: User): Promise<void> {
+  try {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("mauricarnet_api_token") ||
+          localStorage.getItem("API_SYNC_TOKEN") ||
+          ""
+        : "";
+    if (!token) return;
+    await fetch("/api/sync/user", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: u.username,
+        created_at: u.created_at.toISOString(),
+      }),
+    });
+  } catch (err) {
+    console.error("Échec sync utilisateur", u.username, err);
+  }
 }
 
 export async function synchroniserDepuisSupabase(): Promise<void> {

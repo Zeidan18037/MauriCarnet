@@ -60,6 +60,7 @@ CREATE INDEX idx_transactions_timestamp ON transactions(timestamp);
 -- Row Level Security (RLS)
 -- Obligatoire : la clé anon est publique côté client (PWA)
 -- ============================================================
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE produits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
