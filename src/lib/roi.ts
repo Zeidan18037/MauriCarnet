@@ -22,12 +22,13 @@ export interface ResultatROI {
 }
 
 export async function calculerROI(
+  userId: number,
   charges: ChargesFixes,
   depuis?: Date,
   jusqua?: Date
 ): Promise<ResultatROI> {
-  const transactions = await db().transactions.toArray();
-  const produits = await db().produits.toArray();
+  const transactions = await db().transactions.where("user_id").equals(userId).toArray();
+  const produits = await db().produits.where("user_id").equals(userId).toArray();
 
   const debut = depuis ?? new Date(0);
   const fin = jusqua ?? new Date();

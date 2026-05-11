@@ -9,13 +9,17 @@ import {
   supprimerProduit,
   getCategories,
   seedCategoriesIfEmpty,
+  migrerAnciennesDonnees,
 } from "@/lib/crud";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Produit, Categorie } from "@/lib/db";
 
 const ICONES = ["📦", "🥛", "🍞", "🧃", "🍚", "🫘", "🧂", "🫒", "🥜", "🍬", "🧴", "🪥"];
 
 export default function ProduitsPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const uid = user?.id ?? 0;
   const [produits, setProduits] = useState<Produit[]>([]);
   const [categories, setCategories] = useState<Categorie[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -28,8 +32,10 @@ export default function ProduitsPage() {
   const [categorieId, setCategorieId] = useState<number | "">("");
 
   const charger = async () => {
-    await seedCategoriesIfEmpty();
-    const [p, c] = await Promise.all([getProduits(), getCategories()]);
+    if (!uid) return;
+    await migrerAnciennesDonnees(uid);
+    await seedCategoriesIfEmpty(uid);
+    const [p, c] = await Promise.all([getProduits(uid), getCategories(uid)]);
     setProduits(p);
     setCategories(c);
   };
@@ -64,18 +70,25 @@ export default function ProduitsPage() {
     e.preventDefault();
     if (!nom || !prixVente) return;
     try {
-      const data = {
-        nom,
-        prix_achat: parseFloat(prixAchat) || 0,
-        prix_vente: parseFloat(prixVente) || 0,
-        stock_actuel: parseInt(stock) || 0,
-        icone,
-        categorie_id: categorieId || undefined,
-      };
       if (editing) {
-        await modifierProduit(editing.id!, data);
+        await modifierProduit(editing.id!, {
+          nom,
+          prix_achat: parseFloat(prixAchat) || 0,
+          prix_vente: parseFloat(prixVente) || 0,
+          stock_actuel: parseInt(stock) || 0,
+          icone,
+          categorie_id: categorieId || undefined,
+        });
       } else {
-        await ajouterProduit(data);
+        await ajouterProduit({
+          user_id: uid,
+          nom,
+          prix_achat: parseFloat(prixAchat) || 0,
+          prix_vente: parseFloat(prixVente) || 0,
+          stock_actuel: parseInt(stock) || 0,
+          icone,
+          categorie_id: categorieId || undefined,
+        });
       }
       setShowForm(false);
       await charger();

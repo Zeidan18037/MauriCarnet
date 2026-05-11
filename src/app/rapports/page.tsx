@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { calculerROI, type ResultatROI, type ChargesFixes } from "@/lib/roi";
-import { getProduits, getClients } from "@/lib/crud";
+import { getProduits, getClients, migrerAnciennesDonnees } from "@/lib/crud";
+import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/lib/i18n";
 
 const CHARGES_PAR_DEFAUT: ChargesFixes = {
@@ -19,13 +20,18 @@ export default function RapportsPage() {
   const [nbProduits, setNbProduits] = useState(0);
   const [nbClients, setNbClients] = useState(0);
 
+  const { user } = useAuth();
+  const uid = user?.id ?? 0;
+
   useEffect(() => {
-    getProduits().then((p) => setNbProduits(p.length));
-    getClients().then((c) => setNbClients(c.length));
-  }, []);
+    if (!uid) return;
+    migrerAnciennesDonnees(uid);
+    getProduits(uid).then((p) => setNbProduits(p.length));
+    getClients(uid).then((c) => setNbClients(c.length));
+  }, [uid]);
 
   async function handleCalculer() {
-    const r = await calculerROI(charges);
+    const r = await calculerROI(uid, charges);
     setResultat(r);
   }
 

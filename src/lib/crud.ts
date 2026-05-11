@@ -4,10 +4,23 @@ function d() {
   return getDB();
 }
 
+/* ───── Migration ───── */
+
+export async function migrerAnciennesDonnees(userId: number): Promise<void> {
+  await d().transaction("rw", d().produits, d().clients, d().transactions, d().categories, async () => {
+    for (const table of [d().produits, d().clients, d().transactions, d().categories]) {
+      const orphaned = await table.filter((r: any) => r.user_id === undefined || r.user_id === 0).toArray();
+      for (const item of orphaned) {
+        await table.update(item.id!, { user_id: userId } as any);
+      }
+    }
+  });
+}
+
 /* ───── Produits ───── */
 
-export async function getProduits(): Promise<Produit[]> {
-  return d().produits.toArray();
+export async function getProduits(userId: number): Promise<Produit[]> {
+  return d().produits.where("user_id").equals(userId).toArray();
 }
 
 export async function getProduit(id: number): Promise<Produit | undefined> {
@@ -15,7 +28,7 @@ export async function getProduit(id: number): Promise<Produit | undefined> {
 }
 
 export async function ajouterProduit(
-  p: Omit<Produit, "id">
+  p: Omit<Produit, "id"> & { user_id: number }
 ): Promise<number> {
   return d().produits.add(p as Produit);
 }
@@ -33,8 +46,8 @@ export async function supprimerProduit(id: number): Promise<void> {
 
 /* ───── Clients ───── */
 
-export async function getClients(): Promise<Client[]> {
-  return d().clients.toArray();
+export async function getClients(userId: number): Promise<Client[]> {
+  return d().clients.where("user_id").equals(userId).toArray();
 }
 
 export async function getClient(id: number): Promise<Client | undefined> {
@@ -42,7 +55,7 @@ export async function getClient(id: number): Promise<Client | undefined> {
 }
 
 export async function ajouterClient(
-  c: Omit<Client, "id">
+  c: Omit<Client, "id"> & { user_id: number }
 ): Promise<number> {
   return d().clients.add(c as Client);
 }
@@ -59,41 +72,42 @@ export async function supprimerClient(id: number): Promise<void> {
 }
 
 export async function chercherClients(
-  query: string
+  query: string,
+  userId: number
 ): Promise<Client[]> {
   if (!query) return [];
   return d()
-    .clients.filter((c) =>
-      c.nom.toLowerCase().includes(query.toLowerCase())
-    )
+    .clients
+    .where("user_id").equals(userId)
+    .filter((c) => c.nom.toLowerCase().includes(query.toLowerCase()))
     .toArray();
 }
 
 /* ───── Catégories ───── */
 
 export const CATEGORIES_PAR_DEFAUT: Omit<Categorie, "id">[] = [
-  { nom: "Général", icone: "📦" },
-  { nom: "Fruits & Légumes", icone: "🍎🍌🥕" },
-  { nom: "Boissons", icone: "🥤🧃☕" },
-  { nom: "Lait & Fromage", icone: "🥛🧀" },
-  { nom: "Pain & Boulangerie", icone: "🍞🥖🥐" },
-  { nom: "Épicerie", icone: "🍚🧂🫘" },
-  { nom: "Hygiène & Beauté", icone: "🧴🪥🧼" },
-  { nom: "Ménage", icone: "🧹🧽" },
-  { nom: "Outils", icone: "🔧🔨🪛" },
-  { nom: "Snacks & Sucreries", icone: "🍬🍫🍪" },
-  { nom: "Surgelés", icone: "❄️🥩🧊" },
+  { nom: "Général", icone: "📦", user_id: 0 },
+  { nom: "Fruits & Légumes", icone: "🍎🍌🥕", user_id: 0 },
+  { nom: "Boissons", icone: "🥤🧃☕", user_id: 0 },
+  { nom: "Lait & Fromage", icone: "🥛🧀", user_id: 0 },
+  { nom: "Pain & Boulangerie", icone: "🍞🥖🥐", user_id: 0 },
+  { nom: "Épicerie", icone: "🍚🧂🫘", user_id: 0 },
+  { nom: "Hygiène & Beauté", icone: "🧴🪥🧼", user_id: 0 },
+  { nom: "Ménage", icone: "🧹🧽", user_id: 0 },
+  { nom: "Outils", icone: "🔧🔨🪛", user_id: 0 },
+  { nom: "Snacks & Sucreries", icone: "🍬🍫🍪", user_id: 0 },
+  { nom: "Surgelés", icone: "❄️🥩🧊", user_id: 0 },
 ];
 
-export async function getCategories(): Promise<Categorie[]> {
-  return d().categories.toArray();
+export async function getCategories(userId: number): Promise<Categorie[]> {
+  return d().categories.where("user_id").equals(userId).toArray();
 }
 
-export async function seedCategoriesIfEmpty(): Promise<void> {
-  const count = await d().categories.count();
+export async function seedCategoriesIfEmpty(userId: number): Promise<void> {
+  const count = await d().categories.where("user_id").equals(userId).count();
   if (count > 0) return;
   for (const c of CATEGORIES_PAR_DEFAUT) {
-    await d().categories.add(c as Categorie);
+    await d().categories.add({ ...c, user_id: userId } as Categorie);
   }
 }
 
@@ -111,8 +125,12 @@ export async function verifierStock(
 
 /* ───── Transactions ───── */
 
-export async function getTransactions(): Promise<Transaction[]> {
-  return d().transactions.orderBy("timestamp").reverse().toArray();
+export async function getTransactions(userId: number): Promise<Transaction[]> {
+  return d()
+    .transactions
+    .where("user_id").equals(userId)
+    .reverse()
+    .sortBy("timestamp");
 }
 
 export async function getTransaction(
@@ -122,7 +140,7 @@ export async function getTransaction(
 }
 
 export async function ajouterTransaction(
-  t: Omit<Transaction, "id" | "synced">
+  t: Omit<Transaction, "id" | "synced"> & { user_id: number }
 ): Promise<number> {
   if (t.produit_id && t.quantite > 0) {
     const p = await d().produits.get(t.produit_id);
@@ -204,8 +222,12 @@ export async function supprimerTransaction(id: number): Promise<void> {
   );
 }
 
-export async function getTransactionsNonSynced(): Promise<Transaction[]> {
-  return d().transactions.where("synced").equals(0).toArray();
+export async function getTransactionsNonSynced(userId: number): Promise<Transaction[]> {
+  return d()
+    .transactions
+    .where("user_id").equals(userId)
+    .filter((t) => t.synced === 0)
+    .toArray();
 }
 
 export async function marquerSyncede(id: number): Promise<number> {
@@ -214,9 +236,15 @@ export async function marquerSyncede(id: number): Promise<number> {
 
 /* ───── Dettes ───── */
 
-export async function recalculerDettes(): Promise<void> {
-  const transactions = await d().transactions.toArray();
-  const clients = await d().clients.toArray();
+export async function recalculerDettes(userId: number): Promise<void> {
+  const transactions = await d()
+    .transactions
+    .where("user_id").equals(userId)
+    .toArray();
+  const clients = await d()
+    .clients
+    .where("user_id").equals(userId)
+    .toArray();
 
   for (const client of clients) {
     const total = transactions

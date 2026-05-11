@@ -11,7 +11,9 @@ import {
   getTransactions,
   ajouterTransaction,
   recalculerDettes,
+  migrerAnciennesDonnees,
 } from "@/lib/crud";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Client, Transaction } from "@/lib/db";
 
 type Periode = "today" | "month" | "year";
@@ -30,6 +32,8 @@ export default function ClientsPage() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const uid = user?.id ?? 0;
 
   const maintenant = useMemo(() => new Date(), [allTransactions]);
   const debutPeriode = useMemo(() => {
@@ -49,8 +53,10 @@ export default function ClientsPage() {
     [txsFiltrees]
   );
   const charger = async () => {
-    await recalculerDettes();
-    const [clts, txs] = await Promise.all([getClients(), getTransactions()]);
+    if (!uid) return;
+    await migrerAnciennesDonnees(uid);
+    await recalculerDettes(uid);
+    const [clts, txs] = await Promise.all([getClients(uid), getTransactions(uid)]);
     setClients(clts);
     setAllTransactions(txs);
   };
@@ -83,7 +89,7 @@ export default function ClientsPage() {
           telephone: tel,
         });
       } else {
-        await ajouterClient({ nom, telephone: tel, total_dette: 0 });
+        await ajouterClient({ nom, telephone: tel, total_dette: 0, user_id: uid });
       }
       setShowForm(false);
       await charger();
@@ -115,7 +121,7 @@ export default function ClientsPage() {
 
   function voirDetails(client: Client) {
     setSelectedClient(client);
-    getTransactions().then((txs) => {
+    getTransactions(uid).then((txs) => {
       const filtered = txs.filter(
         (t) => t.client_id === client.id && t.reste_a_payer > 0
       );
@@ -134,6 +140,7 @@ export default function ClientsPage() {
         total_dette: nouvelleDette,
       });
       await ajouterTransaction({
+        user_id: uid,
         produit_id: 0,
         client_id: selectedClient.id!,
         type: "cash",
@@ -144,7 +151,7 @@ export default function ClientsPage() {
       });
       setPaiementPartiel("");
       await charger();
-      const updated = await getClients();
+      const updated = await getClients(uid);
       const found = updated.find((c) => c.id === selectedClient.id);
       if (found) {
         setSelectedClient(found);

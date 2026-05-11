@@ -14,7 +14,9 @@ import {
   verifierStock,
   getCategories,
   seedCategoriesIfEmpty,
+  migrerAnciennesDonnees,
 } from "@/lib/crud";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Produit, Client, Transaction, Categorie } from "@/lib/db";
 
 type FormMode = "new" | "edit";
@@ -38,13 +40,19 @@ export default function VentesPage() {
   const [periode, setPeriode] = useState<Periode>("today");
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const uid = user?.id ?? 0;
+
   const charger = async () => {
-    await seedCategoriesIfEmpty();
+    if (!uid) return;
+    await migrerAnciennesDonnees(uid);
+    await seedCategoriesIfEmpty(uid);
     const [txs, prods, clts, cats] = await Promise.all([
-      getTransactions(),
-      getProduits(),
-      getClients(),
-      getCategories(),
+      getTransactions(uid),
+      getProduits(uid),
+      getClients(uid),
+      getCategories(uid),
     ]);
     setTransactions(txs);
     setProduits(prods);
@@ -56,8 +64,6 @@ export default function VentesPage() {
   useEffect(() => {
     charger();
   }, []);
-
-  const { t } = useTranslation();
 
   async function handleConfirmDelete() {
     if (deleteTarget === null) return;
@@ -99,7 +105,7 @@ export default function VentesPage() {
     return txsFiltrees.reduce((sum, t) => {
       const p = map.get(t.produit_id);
       if (!p) return sum;
-      return sum + (p.prix_vente - p.prix_achat) * t.quantite;
+      return sum + ((p.prix_vente || 0) - (p.prix_achat || 0)) * t.quantite;
     }, 0);
   }, [txsFiltrees, produits]);
 
@@ -332,10 +338,12 @@ function NouvelleVenteModal({
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const uid = user?.id ?? 0;
 
   useEffect(() => {
     if (clientQuery.length > 0) {
-      chercherClients(clientQuery).then(setSuggestions);
+      chercherClients(clientQuery, uid).then(setSuggestions);
     } else {
       setSuggestions([]);
     }
@@ -389,6 +397,7 @@ function NouvelleVenteModal({
 
     try {
       await ajouterTransaction({
+        user_id: uid,
         produit_id: selectedProduit.id!,
         client_id: selectedClient?.id,
         type,
@@ -655,6 +664,8 @@ function EditTransactionForm({
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const userId = user?.id ?? 0;
   const [type, setType] = useState(transaction.type);
   const [montantPaye, setMontantPaye] = useState(
     String(transaction.montant_paye)
@@ -664,7 +675,7 @@ function EditTransactionForm({
   const [suggestions, setSuggestions] = useState<Client[]>([]);
 
   useEffect(() => {
-    chercherClients(clientQuery).then(setSuggestions);
+    chercherClients(clientQuery, userId).then(setSuggestions);
   }, [clientQuery]);
 
   useEffect(() => {

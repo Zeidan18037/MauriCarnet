@@ -2,8 +2,8 @@ import { supabase } from "./supabase";
 import { getTransactionsNonSynced, marquerSyncede } from "./crud";
 import { getDB, type User } from "./db";
 
-export async function synchroniser(): Promise<{ ok: number; echec: number }> {
-  const transactions = await getTransactionsNonSynced();
+export async function synchroniser(userId: number): Promise<{ ok: number; echec: number }> {
+  const transactions = await getTransactionsNonSynced(userId);
   let ok = 0;
   let echec = 0;
 
@@ -55,7 +55,7 @@ export async function synchroniserUtilisateur(u: User): Promise<void> {
   }
 }
 
-export async function synchroniserDepuisSupabase(): Promise<void> {
+export async function synchroniserDepuisSupabase(userId: number): Promise<void> {
   const { data, error } = await supabase.from("produits").select("*");
   if (error) {
     console.error("Erreur récupération produits depuis Supabase", error);
@@ -65,11 +65,12 @@ export async function synchroniserDepuisSupabase(): Promise<void> {
   for (const p of data ?? []) {
     await getDB().produits.put({
       id: p.id,
+      user_id: userId,
       nom: p.nom,
       prix_achat: p.prix_achat,
       prix_vente: p.prix_vente,
       stock_actuel: p.stock_actuel,
       icone: p.icone,
-    });
+    } as import("./db").Produit);
   }
 }
