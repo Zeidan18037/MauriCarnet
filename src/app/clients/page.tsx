@@ -227,9 +227,9 @@ export default function ClientsPage() {
         {clients.map((c) => (
           <div
             key={c.id}
-            className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl"
+            className="card-soft flex items-center gap-3 p-4"
           >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <span className="text-lg">👤</span>
             </div>
             <div
@@ -251,15 +251,17 @@ export default function ClientsPage() {
             </div>
             <button
               onClick={() => ouvrirEdition(c)}
-              className="text-xs text-primary px-1"
+              className="text-xs text-foreground/40 hover:text-primary transition-colors px-1"
+              title={t("common.editer")}
             >
-              {t("common.editer")}
+              ✏️
             </button>
             <button
               onClick={() => setConfirmDelete(c.id!)}
-              className="text-xs text-danger"
+              className="text-xs text-foreground/40 hover:text-danger transition-colors"
+              title={t("common.supprimer")}
             >
-              {t("common.supprimer")}
+              🗑️
             </button>
           </div>
         ))}

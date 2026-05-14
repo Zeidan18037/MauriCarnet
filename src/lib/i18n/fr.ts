@@ -3,6 +3,7 @@ const fr: Record<string, string> = {
   "nav.ventes": "Ventes",
   "nav.produits": "Produits",
   "nav.clients": "Clients",
+  "nav.settings": "Paramètres",
   "nav.logout": "Déconnexion",
   "nav.logout_confirm": "Se déconnecter ?",
 

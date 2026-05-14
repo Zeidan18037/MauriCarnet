@@ -1,77 +1,81 @@
-import { supabase } from "./supabase";
 import { getTransactionsNonSynced, marquerSyncede } from "./crud";
-import { getDB, type User } from "./db";
 
 export async function synchroniser(userId: number): Promise<{ ok: number; echec: number }> {
   const transactions = await getTransactionsNonSynced(userId);
-  let ok = 0;
-  let echec = 0;
+  if (transactions.length === 0) return { ok: 0, echec: 0 };
 
-  for (const t of transactions) {
-    const { error } = await supabase.from("transactions").insert({
-      user_id: userId,
-      produit_id: t.produit_id,
-      client_id: t.client_id ?? null,
-      type: t.type,
-      montant_paye: t.montant_paye,
-      reste_a_payer: t.reste_a_payer,
-      quantite: t.quantite,
-      timestamp: t.timestamp.toISOString(),
-    });
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("mauricarnet_api_token") ||
+        localStorage.getItem("API_SYNC_TOKEN") ||
+        ""
+      : "";
+  if (!token) return { ok: 0, echec: transactions.length };
 
-    if (error) {
-      console.error("Échec sync transaction", t.id, error);
-      echec++;
-    } else {
-      await marquerSyncede(t.id!);
-      ok++;
-    }
-  }
+  const username = localStorage.getItem("mauricarnet_username") || undefined;
 
-  return { ok, echec };
-}
-
-export async function synchroniserUtilisateur(u: User): Promise<void> {
   try {
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("mauricarnet_api_token") ||
-          localStorage.getItem("API_SYNC_TOKEN") ||
-          ""
-        : "";
-    if (!token) return;
-    await fetch("/api/sync/user", {
+    const res = await fetch("/api/sync", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        username: u.username,
-        created_at: u.created_at.toISOString(),
+        userId,
+        username,
+        transactions: transactions.map((t) => ({
+          id: t.id,
+          produit_id: t.produit_id,
+          client_id: t.client_id,
+          type: t.type,
+          montant_paye: t.montant_paye,
+          reste_a_payer: t.reste_a_payer,
+          quantite: t.quantite,
+          timestamp: t.timestamp.toISOString(),
+        })),
       }),
     });
+
+    if (!res.ok) {
+      console.error("Échec sync", res.status, await res.text());
+      return { ok: 0, echec: transactions.length };
+    }
+
+    const result = await res.json();
+    if (result.syncedIds) {
+      for (const id of result.syncedIds) {
+        await marquerSyncede(id);
+      }
+    }
+
+    return { ok: result.syncedIds?.length || 0, echec: transactions.length - (result.syncedIds?.length || 0) };
   } catch (err) {
-    console.error("Échec sync utilisateur", u.username, err);
+    console.error("Échec sync réseau", err);
+    return { ok: 0, echec: transactions.length };
   }
 }
 
-export async function synchroniserDepuisSupabase(userId: number): Promise<void> {
-  const { data, error } = await supabase.from("produits").select("*");
-  if (error) {
-    console.error("Erreur récupération produits depuis Supabase", error);
-    return;
-  }
-
-  for (const p of data ?? []) {
-    await getDB().produits.put({
-      id: p.id,
-      user_id: userId,
-      nom: p.nom,
-      prix_achat: p.prix_achat,
-      prix_vente: p.prix_vente,
-      stock_actuel: p.stock_actuel,
-      icone: p.icone,
-    } as import("./db").Produit);
+export async function synchroniserUtilisateur(username: string): Promise<void> {
+  try {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("mauricarnet_api_token") || ""
+        : "";
+    if (!token) return;
+    await fetch("/api/sync", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: 0,
+        username,
+        transactions: [],
+      }),
+    });
+  } catch (err) {
+    console.error("Échec sync utilisateur", username, err);
   }
 }

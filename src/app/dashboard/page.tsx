@@ -141,26 +141,26 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-4">
-            <div className="bg-emerald-100 border border-emerald-200 rounded-xl p-4 text-center shadow-sm">
-              <span className="text-lg text-emerald-700 font-bold block">{totalCash} MRU</span>
+            <div className="card-soft bg-emerald-50 p-4 text-center">
+              <span className="text-xl text-emerald-700 font-bold block">↑ {totalCash} MRU</span>
               <span className="text-xs text-emerald-600 font-medium">💵 {t("dashboard.cash")}</span>
             </div>
-            <div className="bg-red-100 border border-red-200 rounded-xl p-4 text-center shadow-sm">
-              <span className="text-lg text-red-700 font-bold block">{totalDettesSolde} MRU</span>
+            <div className="card-soft bg-red-50 p-4 text-center">
+              <span className="text-xl text-red-700 font-bold block">↓ {totalDettesSolde} MRU</span>
               <span className="text-xs text-red-600 font-medium">🔴 {t("dashboard.dettes")}</span>
             </div>
-            <div className="bg-amber-100 border border-amber-200 rounded-xl p-4 text-center shadow-sm">
-              <span className="text-lg text-amber-700 font-bold block">{totalProfit} MRU</span>
+            <div className="card-soft bg-amber-50 p-4 text-center">
+              <span className="text-xl text-amber-700 font-bold block">↑ {totalProfit} MRU</span>
               <span className="text-xs text-amber-600 font-medium">💰 {t("dashboard.profit")}</span>
             </div>
-            <div className="bg-blue-100 border border-blue-200 rounded-xl p-4 text-center shadow-sm">
-              <span className="text-lg text-blue-700 font-bold block">{totalQuantite}</span>
+            <div className="card-soft bg-blue-50 p-4 text-center">
+              <span className="text-xl text-blue-700 font-bold block">{totalQuantite}</span>
               <span className="text-xs text-blue-600 font-medium">📦 {t("dashboard.produits_vendus")}</span>
             </div>
           </div>
 
           {topProduits.length > 0 && (
-            <div className="bg-card border border-border rounded-2xl p-4 mb-4">
+            <div className="card-soft p-4 mb-4">
               <h2 className="font-bold mb-3">{t("dashboard.top_produits")}</h2>
               <div className="flex flex-col gap-2">
                 {topProduits.map((p, i) => (
@@ -179,7 +179,7 @@ export default function DashboardPage() {
           )}
 
           {topDettes.length > 0 && (
-            <div className="bg-card border border-border rounded-2xl p-4">
+            <div className="card-soft p-4">
               <h2 className="font-bold mb-3">{t("dashboard.top_dettes")}</h2>
               <div className="flex flex-col gap-2">
                 {topDettes.map((c) => (

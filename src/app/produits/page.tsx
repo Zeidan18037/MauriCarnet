@@ -152,7 +152,7 @@ export default function ProduitsPage() {
               {items.map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl"
+                  className="card-soft flex items-center gap-3 p-4"
                 >
                   <span className="text-2xl">{p.icone}</span>
                   <div className="flex-1 min-w-0">
@@ -163,15 +163,17 @@ export default function ProduitsPage() {
                   </div>
                   <button
                     onClick={() => ouvrirEdition(p)}
-                    className="text-xs text-primary px-2"
+                    className="text-xs text-foreground/40 hover:text-primary transition-colors px-1"
+                    title={t("common.editer")}
                   >
-                    {t("common.editer")}
+                    ✏️
                   </button>
                   <button
                     onClick={() => handleSupprimer(p.id!)}
-                    className="text-xs text-danger"
+                    className="text-xs text-foreground/40 hover:text-danger transition-colors"
+                    title={t("common.supprimer")}
                   >
-                    {t("common.supprimer")}
+                    🗑️
                   </button>
                 </div>
               ))}

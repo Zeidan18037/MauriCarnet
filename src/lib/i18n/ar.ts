@@ -3,6 +3,7 @@ const ar: Record<string, string> = {
   "nav.ventes": "المبيعات",
   "nav.produits": "المنتجات",
   "nav.clients": "العملاء",
+  "nav.settings": "الإعدادات",
   "nav.logout": "تسجيل الخروج",
   "nav.logout_confirm": "هل تريد تسجيل الخروج؟",
 

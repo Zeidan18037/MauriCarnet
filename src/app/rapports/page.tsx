@@ -44,7 +44,7 @@ export default function RapportsPage() {
         <StatCard label="Clients" value={nbClients} icon="👥" />
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-4 mb-4">
+      <div className="card-soft p-4 mb-4">
         <h2 className="font-bold mb-3">{t("rapports.charges_fixes")}</h2>
         <div className="grid grid-cols-2 gap-2 mb-4">
           <ChargeInput label={t("rapports.loyer")} value={charges.loyer} onChange={(v) => setCharges((c) => ({ ...c, loyer: v }))} />
@@ -61,7 +61,7 @@ export default function RapportsPage() {
       </div>
 
       {resultat && (
-        <div className="bg-card border border-border rounded-2xl p-4">
+        <div className="card-soft p-4">
           <h2 className="font-bold mb-3">{t("rapports.resultat")}</h2>
           <div className="space-y-2 mb-4">
             <Ligne label="Marge brute totale" value={`${resultat.marge_brute_totale} MRU`} />
@@ -100,7 +100,7 @@ export default function RapportsPage() {
 
 function StatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
   return (
-    <div className="bg-card border border-border rounded-xl p-4 text-center">
+    <div className="card-soft p-4 text-center">
       <span className="text-2xl block mb-1">{icon}</span>
       <span className="text-xl font-bold">{value}</span>
       <span className="text-xs block text-foreground/50">{label}</span>

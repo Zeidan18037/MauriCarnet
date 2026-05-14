@@ -181,28 +181,28 @@ export default function VentesPage() {
           </div>
 
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="bg-emerald-100 border border-emerald-200 rounded-xl p-3 text-center shadow-sm">
-              <span className="text-lg text-emerald-700 font-bold">
-                💵 {totalCashPeriode} MRU
+            <div className="card-soft bg-emerald-50 p-3 text-center">
+              <span className="text-lg text-emerald-700 font-bold block">
+                ↑ {totalCashPeriode} MRU
               </span>
               <span className="text-[10px] block text-emerald-600 font-medium">
-                {t("ventes.cash")}
+                💵 {t("ventes.cash")}
               </span>
             </div>
-            <div className="bg-red-100 border border-red-200 rounded-xl p-3 text-center shadow-sm">
-              <span className="text-lg text-red-700 font-bold">
-                🔴 {totalDettesPeriode} MRU
+            <div className="card-soft bg-red-50 p-3 text-center">
+              <span className="text-lg text-red-700 font-bold block">
+                ↓ {totalDettesPeriode} MRU
               </span>
               <span className="text-[10px] block text-red-600 font-medium">
-                {t("ventes.dette")}
+                🔴 {t("ventes.dette")}
               </span>
             </div>
-            <div className="bg-amber-100 border border-amber-200 rounded-xl p-3 text-center shadow-sm">
-              <span className="text-lg text-amber-700 font-bold">
-                💰 {totalProfit} MRU
+            <div className="card-soft bg-amber-50 p-3 text-center">
+              <span className="text-lg text-amber-700 font-bold block">
+                ↑ {totalProfit} MRU
               </span>
               <span className="text-[10px] block text-amber-600 font-medium">
-                {t("ventes.profit")}
+                💰 {t("ventes.profit")}
               </span>
             </div>
           </div>
@@ -282,7 +282,7 @@ function TransactionLine({
   }
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl">
+    <div className="card-soft flex items-center gap-3 p-4">
       <span className="text-2xl">{produit?.icone ?? "❓"}</span>
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-sm truncate">
@@ -300,15 +300,17 @@ function TransactionLine({
       <div className="flex gap-1">
         <button
           onClick={() => setEditing(true)}
-          className="text-xs text-primary px-2 py-1"
+          className="text-xs text-foreground/40 hover:text-primary transition-colors px-1"
+          title={t("ventes.editer")}
         >
-          {t("ventes.editer")}
+          ✏️
         </button>
         <button
           onClick={() => onRequestDelete(transaction.id!)}
-          className="text-xs text-danger px-2 py-1"
+          className="text-xs text-foreground/40 hover:text-danger transition-colors"
+          title={t("ventes.supprimer")}
         >
-          {t("ventes.supprimer")}
+          🗑️
         </button>
       </div>
     </div>

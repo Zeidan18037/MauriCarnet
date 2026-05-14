@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +14,7 @@ const navItems = [
 ];
 
 export default function BottomNav() {
+  const [showSettings, setShowSettings] = useState(false);
   const pathname = usePathname();
   const { t, locale, setLocale } = useTranslation();
   const { logout } = useAuth();
@@ -22,9 +24,11 @@ export default function BottomNav() {
 
   function toggleLocale() {
     setLocale(locale === "fr" ? "ar" : "fr");
+    setShowSettings(false);
   }
 
   function handleLogout() {
+    setShowSettings(false);
     if (confirm(t("nav.logout_confirm") || "Se déconnecter ?")) {
       logout();
       router.push("/auth/login");
@@ -33,23 +37,27 @@ export default function BottomNav() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="flex items-center justify-between px-4 py-1.5 bg-background border-t border-border">
-        <button
-          onClick={handleLogout}
-          className="text-xs text-foreground/40 hover:text-danger transition-colors flex items-center gap-1"
-          title={t("nav.logout") || "Déconnexion"}
-        >
-          <span>🚪</span>
-          <span className="hidden sm:inline">{t("nav.logout") || "Déconnexion"}</span>
-        </button>
-        <button
-          onClick={toggleLocale}
-          className="text-xs px-2 py-1 rounded-lg border border-border hover:bg-primary/5 transition-colors text-foreground/60"
-          title={t("common.langue")}
-        >
-          {locale === "fr" ? "🇸🇦 العربية" : "🇫🇷 Français"}
-        </button>
-      </div>
+      {showSettings && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setShowSettings(false)} />
+          <div className="absolute bottom-20 right-4 z-50 bg-white rounded-2xl shadow-xl border border-border p-2 min-w-[160px]">
+            <button
+              onClick={toggleLocale}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/5 text-sm font-medium"
+            >
+              <span className="text-lg">{locale === "fr" ? "🇸🇦" : "🇫🇷"}</span>
+              <span>{locale === "fr" ? "العربية" : "Français"}</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-danger/5 text-sm font-medium text-danger"
+            >
+              <span className="text-lg">🚪</span>
+              <span>{t("nav.logout")}</span>
+            </button>
+          </div>
+        </>
+      )}
       <nav className="bg-white flex justify-around py-2 border-t border-border">
         {navItems.map((item) => {
           const actif = pathname.startsWith(item.href);
@@ -61,11 +69,20 @@ export default function BottomNav() {
                 actif ? "text-primary font-bold" : "text-foreground/50"
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-2xl">{item.icon}</span>
               <span className="text-xs">{t(item.labelKey)}</span>
             </a>
           );
         })}
+        <button
+          onClick={() => setShowSettings(!showSettings)}
+          className={`flex flex-col items-center gap-0.5 px-4 py-1 rounded-lg transition-colors ${
+            showSettings ? "text-primary font-bold" : "text-foreground/50"
+          }`}
+        >
+          <span className="text-2xl">⚙️</span>
+          <span className="text-xs">{t("nav.settings")}</span>
+        </button>
       </nav>
     </div>
   );

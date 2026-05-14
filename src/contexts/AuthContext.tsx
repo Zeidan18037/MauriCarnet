@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { registerUser, loginUser, getUsersCount, getSessionTimeout } from "@/lib/crud";
-import { synchroniserUtilisateur } from "@/lib/sync";
+import { synchroniserUtilisateur, synchroniser } from "@/lib/sync";
 import { initKey, clearKey } from "@/lib/crypto";
 import type { User } from "@/lib/db";
 
@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.removeItem(SESSION_START_KEY);
           } else if (session && typeof session.id === "number") {
             setUser(session as User);
+            localStorage.setItem("mauricarnet_username", session.username);
           }
         } catch {
           localStorage.removeItem(STORAGE_KEY);
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearKey();
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(SESSION_START_KEY);
+    localStorage.removeItem("mauricarnet_username");
   }, []);
 
   useEffect(() => {
@@ -93,10 +95,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (u) {
           setUser(u);
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
+          localStorage.setItem("mauricarnet_username", u.username);
           localStorage.setItem(SESSION_START_KEY, String(Date.now()));
           const salt = localStorage.getItem("mauricarnet_enc_salt") || "";
           initKey(pin, salt || username);
-          synchroniserUtilisateur(u);
+          synchroniserUtilisateur(u.username);
           return null;
         }
         return "Nom d'utilisateur ou code PIN incorrect";
@@ -112,13 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const u = await registerUser(username, pin);
         setUser(u);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
-        localStorage.setItem(SESSION_START_KEY, String(Date.now()));
-        const salt = crypto.randomUUID();
-        localStorage.setItem("mauricarnet_enc_salt", salt);
-        initKey(pin, salt);
-        synchroniserUtilisateur(u);
-        return null;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
+          localStorage.setItem("mauricarnet_username", u.username);
+          localStorage.setItem(SESSION_START_KEY, String(Date.now()));
+          const salt = crypto.randomUUID();
+          localStorage.setItem("mauricarnet_enc_salt", salt);
+          initKey(pin, salt);
+          synchroniserUtilisateur(u.username);
+          return null;
       } catch (err: any) {
         return err.message ?? "Erreur lors de l'inscription";
       }

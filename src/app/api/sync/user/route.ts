@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const API_TOKEN = process.env.API_SYNC_TOKEN;
-const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_API_SYNC_TOKEN;
 
 export async function POST(request: Request) {
   if (!API_TOKEN) {
@@ -10,9 +9,7 @@ export async function POST(request: Request) {
   }
 
   const auth = request.headers.get("Authorization");
-  const token = auth?.replace("Bearer ", "");
-  const validTokens = [API_TOKEN, PUBLIC_TOKEN].filter(Boolean);
-  if (!token || !validTokens.includes(token)) {
+  if (auth !== `Bearer ${API_TOKEN}`) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
