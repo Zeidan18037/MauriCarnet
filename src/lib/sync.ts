@@ -1,29 +1,30 @@
 import { getTransactionsNonSynced, marquerSyncede } from "./crud";
 
+function getJwt(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("mauricarnet_jwt") || "";
+}
+
+function hasJwt(): boolean {
+  return !!getJwt();
+}
+
 export async function synchroniser(userId: number): Promise<{ ok: number; echec: number }> {
   const transactions = await getTransactionsNonSynced(userId);
   if (transactions.length === 0) return { ok: 0, echec: 0 };
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("mauricarnet_api_token") ||
-        localStorage.getItem("API_SYNC_TOKEN") ||
-        ""
-      : "";
-  if (!token) return { ok: 0, echec: transactions.length };
-
-  const username = localStorage.getItem("mauricarnet_username") || undefined;
+  const jwt = getJwt();
+  if (!jwt) return { ok: 0, echec: transactions.length };
 
   try {
     const res = await fetch("/api/sync", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${jwt}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userId,
-        username,
+        username: localStorage.getItem("mauricarnet_username") || undefined,
         transactions: transactions.map((t) => ({
           id: t.id,
           produit_id: t.produit_id,
@@ -57,16 +58,22 @@ export async function synchroniser(userId: number): Promise<{ ok: number; echec:
 }
 
 export async function synchroniserUtilisateur(username: string): Promise<void> {
+  const jwt = getJwt();
+  if (!jwt && !hasJwt()) return;
+
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("mauricarnet_api_token") ||
+        localStorage.getItem("API_SYNC_TOKEN") ||
+        ""
+      : "";
+
   try {
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("mauricarnet_api_token") || ""
-        : "";
-    if (!token) return;
+    const authHeader = jwt ? `Bearer ${jwt}` : `Bearer ${token}`;
     await fetch("/api/sync/user", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: authHeader,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

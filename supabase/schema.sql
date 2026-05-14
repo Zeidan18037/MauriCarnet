@@ -6,7 +6,8 @@
 CREATE TABLE IF NOT EXISTS users (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   username TEXT UNIQUE NOT NULL,
-  pin_hash TEXT NOT NULL,
+  pin_hash TEXT NOT NULL DEFAULT '',
+  auth_uid UUID UNIQUE DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -14,7 +15,9 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS categories (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   nom TEXT NOT NULL,
+  nom_ar TEXT,
   icone TEXT NOT NULL DEFAULT '📦',
+  user_id BIGINT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -54,36 +57,55 @@ CREATE TABLE IF NOT EXISTS transactions (
   timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index pour les requêtes fréquentes
+-- Index
 CREATE INDEX IF NOT EXISTS idx_transactions_client ON transactions(client_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_produit ON transactions(produit_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_timestamp ON transactions(timestamp);
 CREATE INDEX IF NOT EXISTS idx_produits_user ON produits(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_users_auth_uid ON users(auth_uid);
 
 -- ============================================================
 -- Row Level Security (RLS)
 -- ============================================================
 
--- Users : pas de RLS (accessible uniquement via api/sync/user avec service_role)
+-- Users : accessible uniquement via service_role (API)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
--- ✅ RLS sur categories : lecture seule pour pull
+-- Catégories : tout le monde peut lire
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Acces total categories" ON categories;
+DROP POLICY IF EXISTS "lecture categories" ON categories;
 CREATE POLICY "lecture categories" ON categories FOR SELECT USING (true);
 
--- ✅ RLS sur produits : lecture seule pour pull
+-- Produits : isolation par user_id
 ALTER TABLE produits ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Acces total produits" ON produits;
-CREATE POLICY "lecture produits" ON produits FOR SELECT USING (true);
+DROP POLICY IF EXISTS "lecture produits" ON produits;
+DROP POLICY IF EXISTS "ecriture produits" ON produits;
+CREATE POLICY "lecture produits" ON produits
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "ecriture produits" ON produits
+  FOR INSERT WITH CHECK (
+    auth.uid() IS NOT NULL
+  );
 
--- ✅ RLS sur clients : anon bloqué (lecture/écriture via sync locale uniquement)
+-- Clients : isolation par user_id
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Acces total clients" ON clients;
--- Aucune politique = tout bloqué pour la clé anon
+DROP POLICY IF EXISTS "lecture clients" ON clients;
+DROP POLICY IF EXISTS "ecriture clients" ON clients;
+CREATE POLICY "lecture clients" ON clients
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "ecriture clients" ON clients
+  FOR INSERT WITH CHECK (
+    auth.uid() IS NOT NULL
+  );
 
--- ✅ RLS sur transactions : écriture seule pour push
+-- Transactions : isolation par user_id
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Acces total transactions" ON transactions;
-CREATE POLICY "ecriture transactions" ON transactions FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "ecriture transactions" ON transactions;
+DROP POLICY IF EXISTS "lecture transactions" ON transactions;
+CREATE POLICY "lecture transactions" ON transactions
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "ecriture transactions" ON transactions
+  FOR INSERT WITH CHECK (
+    auth.uid() IS NOT NULL
+  );

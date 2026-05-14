@@ -1,19 +1,38 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 const API_TOKEN = process.env.API_SYNC_TOKEN;
 const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_API_SYNC_TOKEN;
 
 export async function POST(request: Request) {
-  const validTokens = [API_TOKEN, PUBLIC_TOKEN].filter(Boolean);
-  if (validTokens.length === 0) {
-    return NextResponse.json({ error: "Sync non configuré" }, { status: 503 });
-  }
-
   const auth = request.headers.get("Authorization");
   const token = auth?.replace("Bearer ", "");
-  if (!token || !validTokens.includes(token)) {
+
+  const validTokens = [API_TOKEN, PUBLIC_TOKEN].filter(Boolean);
+  const hasLegacyToken = token && validTokens.includes(token);
+
+  let userIdFromJwt: number | null = null;
+  if (token && !hasLegacyToken) {
+    try {
+      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+      if (!error && user) {
+        const { data: userRow } = await supabaseAdmin
+          .from("users")
+          .select("id")
+          .eq("auth_uid", user.id)
+          .single();
+        userIdFromJwt = userRow?.id ?? null;
+      }
+    } catch {}
+  }
+
+  if (!hasLegacyToken && !userIdFromJwt) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  if (hasLegacyToken && !API_TOKEN && !PUBLIC_TOKEN) {
+    return NextResponse.json({ error: "Sync non configuré" }, { status: 503 });
   }
 
   const { username, created_at } = await request.json();
