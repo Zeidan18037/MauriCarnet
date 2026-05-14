@@ -1,12 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useTranslation } from "@/lib/i18n";
 
 export default function Dashboard() {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 pb-24">
-      <div className="text-5xl mb-4">📒</div>
+      <Image src="/icon-192x192.png" alt="MauriCarnet" width={96} height={96} className="mb-4" priority />
       <h1 className="text-3xl font-bold mb-1">{t("dashboard.title")}</h1>
       <p className="text-base text-foreground/60 mb-8">
         {t("dashboard.subtitle")}

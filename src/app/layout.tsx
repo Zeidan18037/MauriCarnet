@@ -49,6 +49,7 @@ export default function RootLayout({
     >
       <head>
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
       </head>
       <body className="min-h-full flex flex-col pb-20">
         <AuthProvider>

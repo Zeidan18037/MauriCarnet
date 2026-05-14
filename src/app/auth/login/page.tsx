@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/lib/i18n";
@@ -27,7 +28,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
-      <div className="text-5xl mb-4">📒</div>
+      <Image src="/icon-192x192.png" alt="MauriCarnet" width={80} height={80} className="mb-2" priority />
       <h1 className="text-3xl font-bold mb-1">{t("dashboard.title")}</h1>
       <p className="text-sm text-foreground/60 mb-8">{t("dashboard.subtitle")}</p>
 
