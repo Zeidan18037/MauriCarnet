@@ -1,17 +1,12 @@
 {
   "servers": {
     "vercel": {
-      "type": "http",
-      "url": "https://mcp.vercel.com"
+      "command": "node",
+      "args": [".scripts/mcp-vercel.mjs"]
     },
     "supabase": {
-      "command": "npx",
-      "args": [
-        "-y", "@supabase/mcp-server-postgrest@latest",
-        "--apiUrl", "https://wifexlqxaoqowleoqmbb.supabase.co/rest/v1",
-        "--apiKey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpZmV4bHF4YW9xb3dsZW9xbWJiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODM2MzM3OCwiZXhwIjoyMDkzOTM5Mzc4fQ.3PczpyVE2sZtN7ehXKT0q6mD5JyycdnyZdNj1q-Kr-c",
-        "--schema", "public"
-      ]
+      "command": "node",
+      "args": [".scripts/mcp-supabase.mjs"]
     }
   }
 }

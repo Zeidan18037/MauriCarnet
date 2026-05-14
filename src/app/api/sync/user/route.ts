@@ -2,14 +2,17 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const API_TOKEN = process.env.API_SYNC_TOKEN;
+const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_API_SYNC_TOKEN;
 
 export async function POST(request: Request) {
-  if (!API_TOKEN) {
+  const validTokens = [API_TOKEN, PUBLIC_TOKEN].filter(Boolean);
+  if (validTokens.length === 0) {
     return NextResponse.json({ error: "Sync non configuré" }, { status: 503 });
   }
 
   const auth = request.headers.get("Authorization");
-  if (auth !== `Bearer ${API_TOKEN}`) {
+  const token = auth?.replace("Bearer ", "");
+  if (!token || !validTokens.includes(token)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

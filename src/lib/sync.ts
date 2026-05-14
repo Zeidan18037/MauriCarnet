@@ -63,16 +63,15 @@ export async function synchroniserUtilisateur(username: string): Promise<void> {
         ? localStorage.getItem("mauricarnet_api_token") || ""
         : "";
     if (!token) return;
-    await fetch("/api/sync", {
+    await fetch("/api/sync/user", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userId: 0,
         username,
-        transactions: [],
+        created_at: new Date().toISOString(),
       }),
     });
   } catch (err) {
