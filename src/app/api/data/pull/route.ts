@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
   const { data: userRow } = await supabaseAdmin
     .from("users")
-    .select("id, username, auth_uid, created_at")
+    .select("id, username, auth_uid, enc_salt, created_at")
     .eq("auth_uid", authUser.id)
     .single();
 
@@ -38,6 +38,7 @@ export async function GET(request: Request) {
       id: userRow.id,
       username: userRow.username,
       auth_uid: userRow.auth_uid,
+      enc_salt: userRow.enc_salt,
       created_at: userRow.created_at,
     },
     produits: produitsRes.data ?? [],

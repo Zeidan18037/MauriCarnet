@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Corps de requête invalide" }, { status: 400 });
   }
 
-  const { username, pin, pin_hash } = body;
+  const { username, pin, pin_hash, enc_salt } = body;
   if (!username || typeof username !== "string" || username.length < 2) {
     return NextResponse.json({ error: "username requis (min 2 caractères)" }, { status: 400 });
   }
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
       username,
       pin_hash: pin_hash || "",
       auth_uid: authData.user.id,
+      enc_salt: enc_salt || null,
       created_at: new Date().toISOString(),
     })
     .select("id")
@@ -61,12 +62,12 @@ export async function POST(request: Request) {
 
   if (sessionError || !sessionData.session) {
     return NextResponse.json({
-      user: { id: userRow.id, username, auth_uid: authData.user.id },
+      user: { id: userRow.id, username, enc_salt, auth_uid: authData.user.id },
     });
   }
 
   const response = NextResponse.json({
-    user: { id: userRow.id, username, auth_uid: authData.user.id },
+    user: { id: userRow.id, username, enc_salt, auth_uid: authData.user.id },
     session: {
       access_token: sessionData.session.access_token,
       refresh_token: sessionData.session.refresh_token,

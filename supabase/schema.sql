@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT UNIQUE NOT NULL,
   pin_hash TEXT NOT NULL DEFAULT '',
   auth_uid UUID UNIQUE DEFAULT NULL,
+  enc_salt TEXT DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

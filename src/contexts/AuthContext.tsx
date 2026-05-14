@@ -134,7 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
             localStorage.setItem("mauricarnet_username", u.username);
             localStorage.setItem(SESSION_START_KEY, String(Date.now()));
-            const salt = localStorage.getItem("mauricarnet_enc_salt") || "";
+            const salt = data.user.enc_salt || localStorage.getItem("mauricarnet_enc_salt") || "";
+            if (salt) localStorage.setItem("mauricarnet_enc_salt", salt);
             initKey(pin, salt || username);
             onlineSuccess = true;
             pullUserData(data.user.id, accessToken);
@@ -173,10 +174,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const pin_hash = await hashPin(pin);
 
       try {
+        const encSalt = crypto.randomUUID();
+
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, pin, pin_hash }),
+          body: JSON.stringify({ username, pin, pin_hash, enc_salt: encSalt }),
         });
 
         if (res.ok) {
@@ -211,9 +214,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
             localStorage.setItem("mauricarnet_username", u.username);
             localStorage.setItem(SESSION_START_KEY, String(Date.now()));
-            const salt = crypto.randomUUID();
-            localStorage.setItem("mauricarnet_enc_salt", salt);
-            initKey(pin, salt);
+            localStorage.setItem("mauricarnet_enc_salt", encSalt);
+            initKey(pin, encSalt);
             return null;
           }
         } else {

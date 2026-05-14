@@ -30,9 +30,9 @@ export async function POST(request: Request) {
   }
 
   const authUid = data.user.id;
-  const { data: userRow, error: dbError } = await supabaseAdmin
+  let { data: userRow, error: dbError } = await supabaseAdmin
     .from("users")
-    .select("id, username, auth_uid")
+    .select("id, username, auth_uid, enc_salt")
     .eq("auth_uid", authUid)
     .single();
 
@@ -40,8 +40,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
   }
 
+  if (!userRow.enc_salt) {
+    const newSalt = crypto.randomUUID();
+    await supabaseAdmin
+      .from("users")
+      .update({ enc_salt: newSalt })
+      .eq("id", userRow.id);
+    userRow.enc_salt = newSalt;
+  }
+
   const response = NextResponse.json({
-    user: { id: userRow.id, username: userRow.username, auth_uid: userRow.auth_uid },
+    user: {
+      id: userRow.id,
+      username: userRow.username,
+      auth_uid: userRow.auth_uid,
+      enc_salt: userRow.enc_salt,
+    },
     session: {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
