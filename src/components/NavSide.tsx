@@ -18,10 +18,11 @@ export default function NavSide() {
   const pathname = usePathname();
   const { t, locale, dir, setLocale } = useTranslation();
   const { logout } = useAuth();
-  const { toggle: toggleNav } = useNav();
+  const { mode, toggle: toggleNav } = useNav();
   const router = useRouter();
 
   if (pathname === "/offline" || pathname.startsWith("/auth")) return null;
+  if (mode === "bottom") return null;
 
   const sideClass = dir === "rtl" ? "right-0 border-l" : "left-0 border-r";
   const popupSide = dir === "rtl" ? "right-16" : "left-16";
