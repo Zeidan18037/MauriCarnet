@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS produits (
   prix_achat NUMERIC(10,2) NOT NULL DEFAULT 0,
   prix_vente NUMERIC(10,2) NOT NULL DEFAULT 0,
   stock_actuel INTEGER NOT NULL DEFAULT 0,
-  icone TEXT NOT NULL DEFAULT '📦',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, nom)
 );
 
 -- Table Clients

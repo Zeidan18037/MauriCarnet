@@ -128,6 +128,11 @@ export default function VentesPage() {
 
   const mapProduit = new Map(produits.map((p) => [p.id, p]));
   const mapClient = new Map(clients.map((c) => [c.id, c]));
+  const mapCategorie = new Map(categories.map((c) => [c.id, c]));
+  function catIcone(produit?: Produit): string {
+    if (!produit) return "📦";
+    return mapCategorie.get(produit.categorie_id ?? 0)?.icone ?? "📦";
+  }
 
   return (
     <div className="p-4 pb-24">
@@ -215,15 +220,16 @@ export default function VentesPage() {
           const c = t.client_id ? mapClient.get(t.client_id) : null;
           return (
             <TransactionLine
-              key={t.id}
-              transaction={t}
-              produit={p}
-              client={c}
-              produits={produits}
-              clients={clients}
-              onUpdate={charger}
-              onRequestDelete={(id) => setDeleteTarget(id)}
-            />
+                key={t.id}
+                transaction={t}
+                produit={p}
+                client={c}
+                produits={produits}
+                clients={clients}
+                categories={categories}
+                onUpdate={charger}
+                onRequestDelete={(id) => setDeleteTarget(id)}
+              />
           );
         })}
         {transactions.length === 0 && produits.length > 0 && (
@@ -252,6 +258,7 @@ function TransactionLine({
   client,
   produits,
   clients,
+  categories,
   onUpdate,
   onRequestDelete,
 }: {
@@ -260,6 +267,7 @@ function TransactionLine({
   client?: Client | null;
   produits: Produit[];
   clients: Client[];
+  categories: Categorie[];
   onUpdate: () => void;
   onRequestDelete: (id: number) => void;
 }) {
@@ -281,9 +289,15 @@ function TransactionLine({
     );
   }
 
+  const catIcone = () => {
+    if (!produit) return "📦";
+    const cat = categories.find((c) => c.id === produit.categorie_id);
+    return cat?.icone ?? "📦";
+  };
+
   return (
     <div className="card-soft flex items-center gap-3 p-4">
-      <span className="text-2xl">{produit?.icone ?? "❓"}</span>
+      <span className="text-2xl">{catIcone()}</span>
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-sm truncate">
           {produit?.nom ?? "Inconnu"}
@@ -345,6 +359,7 @@ function NouvelleVenteModal({
   const { t, locale } = useTranslation();
   const { user } = useAuth();
   const uid = user?.id ?? 0;
+  const mapCategorie = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
   useEffect(() => {
     if (clientQuery.length > 0) {
@@ -465,17 +480,17 @@ function NouvelleVenteModal({
                     <h4 className="text-xs font-bold text-foreground/50 uppercase tracking-wide mb-2">
                       {t("ventes.frequents")}
                     </h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      {topProduits.map((p) => (
-                        <button
-                          key={p.id}
-                          onClick={() => {
-                            setSelectedProduit(p);
-                            setStep("details");
-                          }}
-                          className="p-3 border-2 border-primary/20 bg-primary/5 rounded-xl text-center active:scale-95"
-                        >
-                          <span className="text-2xl block">{p.icone}</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {topProduits.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        setSelectedProduit(p);
+                        setStep("details");
+                      }}
+                      className="p-3 border-2 border-primary/20 bg-primary/5 rounded-xl text-center active:scale-95"
+                    >
+                      <span className="text-2xl block">{mapCategorie.get(p.categorie_id ?? 0)?.icone ?? "📦"}</span>
                           <span className="text-xs font-bold">{p.nom}</span>
                           <span className="text-[10px] block text-foreground/60">
                             {p.prix_vente} MRU
@@ -516,7 +531,7 @@ function NouvelleVenteModal({
                               }}
                               className="p-3 border border-border rounded-xl text-center active:scale-95"
                             >
-                              <span className="text-2xl block">{p.icone}</span>
+                              <span className="text-2xl block">{mapCategorie.get(p.categorie_id ?? 0)?.icone ?? "📦"}</span>
                               <span className="text-xs font-medium">{p.nom}</span>
                               <span className="text-[10px] block text-foreground/60">
                                 {p.prix_vente} MRU
@@ -537,7 +552,7 @@ function NouvelleVenteModal({
             {step === "details" && selectedProduit && (
               <div>
                 <div className="flex items-center gap-3 mb-4 p-3 bg-primary/5 rounded-xl">
-                  <span className="text-3xl">{selectedProduit.icone}</span>
+                  <span className="text-3xl">{mapCategorie.get(selectedProduit.categorie_id ?? 0)?.icone ?? "📦"}</span>
                   <div>
                     <div className="font-bold">{selectedProduit.nom}</div>
                     <div className="text-sm text-foreground/60">
@@ -706,7 +721,7 @@ function EditTransactionForm({
   return (
     <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl mb-2">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xl">{produit?.icone}</span>
+        <span className="text-xl">📦</span>
         <span className="font-semibold text-sm">{produit?.nom}</span>
         <button onClick={onCancel} className="ml-auto text-xs text-foreground/50">
           {t("common.annuler")}

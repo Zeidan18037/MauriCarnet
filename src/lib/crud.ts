@@ -5,7 +5,7 @@ function d() {
   return getDB();
 }
 
-const PRODUIT_ENC_FIELDS = ["nom", "icone"] as const;
+const PRODUIT_ENC_FIELDS = ["nom"] as const;
 const CLIENT_ENC_FIELDS = ["nom", "telephone"] as const;
 
 async function encryptFields<T extends Record<string, any>>(obj: T, fields: readonly (keyof T)[]): Promise<T> {
@@ -39,6 +39,13 @@ export async function migrerAnciennesDonnees(userId: number): Promise<void> {
   });
 }
 
+export async function verifierNomUnique(nom: string, userId: number, excludeId?: number): Promise<void> {
+  const existant = await d().produits.where("user_id").equals(userId).toArray();
+  const decrypted = await Promise.all(existant.map((r) => decryptFields(r, PRODUIT_ENC_FIELDS)));
+  const doublon = decrypted.find((p) => p.nom.toLowerCase() === nom.toLowerCase() && p.id !== excludeId);
+  if (doublon) throw new Error(`Un produit nommé "${nom}" existe déjà`);
+}
+
 /* ───── Produits ───── */
 
 export async function getProduits(userId: number): Promise<Produit[]> {
@@ -54,6 +61,7 @@ export async function getProduit(id: number): Promise<Produit | undefined> {
 export async function ajouterProduit(
   p: Omit<Produit, "id"> & { user_id: number }
 ): Promise<number> {
+  await verifierNomUnique(p.nom, p.user_id);
   return d().produits.add((await encryptFields(p, PRODUIT_ENC_FIELDS)) as Produit);
 }
 
@@ -61,6 +69,10 @@ export async function modifierProduit(
   id: number,
   p: Partial<Produit>
 ): Promise<number> {
+  if (p.nom) {
+    const old = await d().produits.get(id);
+    if (old && old.user_id) await verifierNomUnique(p.nom, old.user_id, id);
+  }
   return d().produits.update(id, await encryptFields(p, PRODUIT_ENC_FIELDS));
 }
 

@@ -15,8 +15,6 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import type { Produit, Categorie } from "@/lib/db";
 
-const ICONES = ["📦", "🥛", "🍞", "🧃", "🍚", "🫘", "🧂", "🫒", "🥜", "🍬", "🧴", "🪥"];
-
 export default function ProduitsPage() {
   const { t, locale } = useTranslation();
   const { user } = useAuth();
@@ -29,7 +27,6 @@ export default function ProduitsPage() {
   const [prixAchat, setPrixAchat] = useState("");
   const [prixVente, setPrixVente] = useState("");
   const [stock, setStock] = useState("");
-  const [icone, setIcone] = useState("📦");
   const [categorieId, setCategorieId] = useState<number | "">("");
 
   const charger = async () => {
@@ -51,7 +48,6 @@ export default function ProduitsPage() {
     setPrixAchat("");
     setPrixVente("");
     setStock("");
-    setIcone("📦");
     setCategorieId("");
     setShowForm(true);
   }
@@ -62,7 +58,6 @@ export default function ProduitsPage() {
     setPrixAchat(String(p.prix_achat));
     setPrixVente(String(p.prix_vente));
     setStock(String(p.stock_actuel));
-    setIcone(p.icone);
     setCategorieId(p.categorie_id ?? "");
     setShowForm(true);
   }
@@ -77,7 +72,6 @@ export default function ProduitsPage() {
           prix_achat: parseFloat(prixAchat) || 0,
           prix_vente: parseFloat(prixVente) || 0,
           stock_actuel: parseInt(stock) || 0,
-          icone,
           categorie_id: categorieId || undefined,
         });
       } else {
@@ -87,7 +81,6 @@ export default function ProduitsPage() {
           prix_achat: parseFloat(prixAchat) || 0,
           prix_vente: parseFloat(prixVente) || 0,
           stock_actuel: parseInt(stock) || 0,
-          icone,
           categorie_id: categorieId || undefined,
         });
       }
@@ -154,7 +147,7 @@ export default function ProduitsPage() {
                   key={p.id}
                   className="card-soft flex items-center gap-3 p-4"
                 >
-                  <span className="text-2xl">{p.icone}</span>
+                  <span className="text-2xl">{mapCategorie.get(p.categorie_id)?.icone ?? "📦"}</span>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm">{p.nom}</div>
                     <div className="text-[10px] text-foreground/50">
@@ -200,21 +193,6 @@ export default function ProduitsPage() {
                   ✕
                 </button>
               </div>
-            </div>
-
-            <div className="flex gap-2 flex-wrap mb-4">
-              {ICONES.map((ic) => (
-                <button
-                  type="button"
-                  key={ic}
-                  onClick={() => setIcone(ic)}
-                  className={`text-2xl w-10 h-10 flex items-center justify-center rounded-lg border ${
-                    icone === ic ? "border-primary bg-primary/10" : "border-border"
-                  }`}
-                >
-                  {ic}
-                </button>
-              ))}
             </div>
 
             <select

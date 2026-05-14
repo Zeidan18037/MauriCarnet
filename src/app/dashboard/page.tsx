@@ -6,11 +6,12 @@ import {
   getTransactions,
   getProduits,
   getClients,
+  getCategories,
   recalculerDettes,
   migrerAnciennesDonnees,
 } from "@/lib/crud";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Produit, Client, Transaction } from "@/lib/db";
+import type { Produit, Client, Transaction, Categorie } from "@/lib/db";
 
 type Periode = "today" | "month" | "year";
 
@@ -18,6 +19,7 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [produits, setProduits] = useState<Produit[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [categories, setCategories] = useState<Categorie[]>([]);
   const [periode, setPeriode] = useState<Periode>("today");
 
   const { t, locale } = useTranslation();
@@ -28,14 +30,16 @@ export default function DashboardPage() {
     if (!uid) return;
     await migrerAnciennesDonnees(uid);
     await recalculerDettes(uid);
-    const [txs, prods, clts] = await Promise.all([
+    const [txs, prods, clts, cats] = await Promise.all([
       getTransactions(uid),
       getProduits(uid),
       getClients(uid),
+      getCategories(uid),
     ]);
     setTransactions(txs);
     setProduits(prods);
     setClients(clts);
+    setCategories(cats);
   };
 
   useEffect(() => {
@@ -81,11 +85,13 @@ export default function DashboardPage() {
   }, [txsFiltrees, produits]);
 
   const topProduits = useMemo(() => {
+    const catMap = new Map(categories.map((c) => [c.id, c]));
     const map = new Map<number, { count: number; profit: number; nom: string; icone: string }>();
     for (const t of txsFiltrees) {
       if (!map.has(t.produit_id)) {
         const p = produits.find((pr) => pr.id === t.produit_id);
-        map.set(t.produit_id, { count: 0, profit: 0, nom: p?.nom ?? "?", icone: p?.icone ?? "❓" });
+        const cat = catMap.get(p?.categorie_id ?? 0);
+        map.set(t.produit_id, { count: 0, profit: 0, nom: p?.nom ?? "?", icone: cat?.icone ?? "📦" });
       }
       const entry = map.get(t.produit_id)!;
       entry.count += t.quantite;
