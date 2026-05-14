@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import BottomNav from "@/components/BottomNav";
+import NavSide from "@/components/NavSide";
+import NavBody from "@/components/NavBody";
 import SwipeNav from "@/components/SwipeNav";
 import AuthGate from "@/components/AuthGate";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { NavProvider } from "@/contexts/NavContext";
 import { LocaleProvider } from "@/lib/i18n";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import "./globals.css";
@@ -51,15 +54,20 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <link rel="icon" type="image/png" href="/favicon.png" />
       </head>
-      <body className="min-h-full flex flex-col pb-20">
+      <body className="min-h-full flex flex-col">
         <AuthProvider>
           <LocaleProvider>
-            <AuthGate>
-              {children}
-              <ServiceWorkerRegistration />
-              <SwipeNav />
-              <BottomNav />
-            </AuthGate>
+            <NavProvider>
+              <NavBody>
+                <AuthGate>
+                  {children}
+                  <ServiceWorkerRegistration />
+                  <SwipeNav />
+                  <BottomNav />
+                  <NavSide />
+                </AuthGate>
+              </NavBody>
+            </NavProvider>
           </LocaleProvider>
         </AuthProvider>
       </body>

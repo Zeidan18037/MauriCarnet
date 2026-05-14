@@ -4,12 +4,13 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNav } from "@/contexts/NavContext";
 import { useRouter } from "next/navigation";
 
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
-  { labelKey: "nav.ventes", href: "/ventes", icon: "💰" },
   { labelKey: "nav.produits", href: "/produits", icon: "📦" },
+  { labelKey: "nav.ventes", href: "/ventes", icon: "💰" },
   { labelKey: "nav.clients", href: "/clients", icon: "👥" },
 ];
 
@@ -18,9 +19,11 @@ export default function BottomNav() {
   const pathname = usePathname();
   const { t, locale, setLocale } = useTranslation();
   const { logout } = useAuth();
+  const { mode, toggle: toggleNav } = useNav();
   const router = useRouter();
 
   if (pathname === "/offline" || pathname.startsWith("/auth")) return null;
+  if (mode === "side") return null;
 
   function toggleLocale() {
     setLocale(locale === "fr" ? "ar" : "fr");
@@ -40,13 +43,20 @@ export default function BottomNav() {
       {showSettings && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowSettings(false)} />
-          <div className="absolute bottom-20 right-4 z-50 bg-white rounded-2xl shadow-xl border border-border p-2 min-w-[160px]">
+          <div className="absolute bottom-20 right-4 z-50 bg-white rounded-2xl shadow-xl border border-border p-2 min-w-[180px]">
             <button
               onClick={toggleLocale}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/5 text-sm font-medium"
             >
               <span className="text-lg">{locale === "fr" ? "🇸🇦" : "🇫🇷"}</span>
               <span>{locale === "fr" ? "العربية" : "Français"}</span>
+            </button>
+            <button
+              onClick={() => { setShowSettings(false); toggleNav(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/5 text-sm font-medium"
+            >
+              <span className="text-lg">{mode === "bottom" ? "↔️" : "⬇️"}</span>
+              <span>{mode === "bottom" ? t("nav.side_mode") : t("nav.bottom_mode")}</span>
             </button>
             <button
               onClick={handleLogout}

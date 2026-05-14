@@ -23,7 +23,7 @@ export default function LoginPage() {
     }
     const err = await login(username, pin);
     if (err) setError(err);
-    else router.push("/");
+    else router.push("/ventes");
   }
 
   return (

@@ -4,6 +4,8 @@ const ar: Record<string, string> = {
   "nav.produits": "المنتجات",
   "nav.clients": "العملاء",
   "nav.settings": "الإعدادات",
+  "nav.side_mode": "جانبية",
+  "nav.bottom_mode": "أسفل (افتراضي)",
   "nav.logout": "تسجيل الخروج",
   "nav.logout_confirm": "هل تريد تسجيل الخروج؟",
 

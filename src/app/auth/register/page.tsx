@@ -32,7 +32,7 @@ export default function RegisterPage() {
     }
     const err = await register(username, pin);
     if (err) setError(err);
-    else router.push("/");
+    else router.push("/ventes");
   }
 
   return (

@@ -1,0 +1,16 @@
+- generic [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e4]:
+    - img "MauriCarnet" [ref=e5]
+    - heading "MauriCarnet" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Inscription
+    - generic [ref=e8]:
+      - textbox "Nom d'utilisateur" [active] [ref=e9]
+      - textbox "Code PIN" [ref=e10]
+      - textbox "Confirmer le PIN" [ref=e11]
+      - button "Créer un compte" [ref=e12]
+    - generic [ref=e13]:
+      - generic [ref=e14]: Déjà un compte ?
+      - link "Connexion" [ref=e15] [cursor=pointer]:
+        - /url: /auth/login
+    - button "🇸🇦 العربية" [ref=e17]

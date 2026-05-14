@@ -4,6 +4,8 @@ const fr: Record<string, string> = {
   "nav.produits": "Produits",
   "nav.clients": "Clients",
   "nav.settings": "Paramètres",
+  "nav.side_mode": "Latérale (côté)",
+  "nav.bottom_mode": "Défaut (bas)",
   "nav.logout": "Déconnexion",
   "nav.logout_confirm": "Se déconnecter ?",
 
