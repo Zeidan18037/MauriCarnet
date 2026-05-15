@@ -1,4 +1,4 @@
-import { getTransactionsNonSynced, marquerSyncede } from "./crud";
+import { getTransactionsNonSynced, marquerSyncede, getProduits, getClients } from "./crud";
 
 function getJwt(): string {
   if (typeof window === "undefined") return "";
@@ -10,8 +10,12 @@ function hasJwt(): boolean {
 }
 
 export async function synchroniser(userId: number): Promise<{ ok: number; echec: number }> {
-  const transactions = await getTransactionsNonSynced(userId);
-  if (transactions.length === 0) return { ok: 0, echec: 0 };
+  const [transactions, produits, clients] = await Promise.all([
+    getTransactionsNonSynced(userId),
+    getProduits(userId),
+    getClients(userId),
+  ]);
+  if (transactions.length === 0 && produits.length === 0 && clients.length === 0) return { ok: 0, echec: 0 };
 
   const jwt = getJwt();
   if (!jwt) return { ok: 0, echec: transactions.length };
@@ -25,6 +29,21 @@ export async function synchroniser(userId: number): Promise<{ ok: number; echec:
       },
       body: JSON.stringify({
         username: localStorage.getItem("mauricarnet_username") || undefined,
+        userId,
+        produits: produits.map((p) => ({
+          id: p.id,
+          nom: p.nom,
+          prix_achat: p.prix_achat,
+          prix_vente: p.prix_vente,
+          stock_actuel: p.stock_actuel,
+          categorie_id: p.categorie_id,
+        })),
+        clients: clients.map((c) => ({
+          id: c.id,
+          nom: c.nom,
+          telephone: c.telephone,
+          total_dette: c.total_dette,
+        })),
         transactions: transactions.map((t) => ({
           id: t.id,
           produit_id: t.produit_id,

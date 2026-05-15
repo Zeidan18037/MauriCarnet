@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 
   const { error } = await supabase.from("users").upsert(
     { username, created_at: created_at ?? new Date().toISOString() },
-    { onConflict: "username" }
+    { onConflict: "username", ignoreDuplicates: true }
   );
 
   if (error) {

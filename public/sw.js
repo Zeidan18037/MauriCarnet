@@ -41,39 +41,24 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("sync", (event) => {
   if (event.tag === "sync-mauricarnet") {
-    event.waitUntil(syncData());
+    event.waitUntil(requestClientSync());
   }
 });
 
-async function syncData() {
+async function requestClientSync() {
   try {
     const clients = await self.clients.matchAll();
-    clients.forEach((client) =>
-      client.postMessage({ type: "SYNC_START" })
+    const results = await Promise.allSettled(
+      clients.map((client) =>
+        client.postMessage({ type: "SYNC_REQUEST" })
+      )
     );
-
-    const token = await new Promise((resolve) => {
-      const handleMessage = (event) => {
-        if (event.data?.type === "SW_TOKEN") {
-          self.removeEventListener("message", handleMessage);
-          resolve(event.data.token);
-        }
-      };
-      self.addEventListener("message", handleMessage);
-      setTimeout(() => resolve(null), 2000);
-    });
-
-    const response = await fetch("/api/sync", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${token || ""}` },
-    });
-
-    const ok = response.ok;
+    const ok = results.some((r) => r.status === "fulfilled");
     clients.forEach((client) =>
       client.postMessage({ type: "SYNC_DONE", ok })
     );
   } catch (err) {
-    console.error("Sync échouée", err);
+    console.error("Sync request échouée", err);
   }
 }
 

@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { NavProvider } from "@/contexts/NavContext";
 import { LocaleProvider } from "@/lib/i18n";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import SyncProvider from "@/components/SyncProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -59,9 +60,10 @@ export default function RootLayout({
           <LocaleProvider>
             <NavProvider>
               <NavBody>
-                <AuthGate>
-                  {children}
-                  <ServiceWorkerRegistration />
+                  <AuthGate>
+                    {children}
+                    <SyncProvider />
+                    <ServiceWorkerRegistration />
                   <SwipeNav />
                   <BottomNav />
                   <NavSide />

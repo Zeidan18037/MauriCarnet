@@ -107,8 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (username: string, pin: string): Promise<string | null> => {
-      let onlineSuccess = false;
-
       try {
         const res = await fetch("/api/auth/login", {
           method: "POST",
@@ -137,15 +135,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const salt = data.user.enc_salt || localStorage.getItem("mauricarnet_enc_salt") || "";
             if (salt) localStorage.setItem("mauricarnet_enc_salt", salt);
             initKey(pin, salt || username);
-            onlineSuccess = true;
             pullUserData(data.user.id, accessToken);
+            return null;
           }
         }
+        const err = await res.json().catch(() => ({ error: "Nom d'utilisateur ou code PIN incorrect" }));
+        return err.error || "Nom d'utilisateur ou code PIN incorrect";
       } catch {
         // offline — fallback to local
-      }
-
-      if (!onlineSuccess) {
         try {
           const u = await loginUser(username, pin);
           if (u) {
@@ -163,8 +160,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return err.message ?? "Erreur de connexion";
         }
       }
-
-      return null;
     },
     []
   );
@@ -219,21 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return null;
           }
         } else {
-          const err = await res.json().catch(() => ({ error: "Erreur inconnue" }));
-          if (res.status !== 409) {
-            const u = await registerUser(username, pin);
-            if (u) {
-              setUser(u);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
-              localStorage.setItem("mauricarnet_username", u.username);
-              localStorage.setItem(SESSION_START_KEY, String(Date.now()));
-              const salt = crypto.randomUUID();
-              localStorage.setItem("mauricarnet_enc_salt", salt);
-              initKey(pin, salt);
-              synchroniserUtilisateur(u.username);
-              return null;
-            }
-          }
+          const err = await res.json().catch(() => ({ error: "Erreur lors de l'inscription" }));
           return err.error || "Erreur lors de l'inscription";
         }
       } catch {
