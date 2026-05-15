@@ -222,14 +222,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const u = await registerUser(username, pin);
           if (u) {
+            localStorage.setItem(`mauricarnet_pin_${username}`, pin);
+            const salt = u.enc_salt || crypto.randomUUID();
+            localStorage.setItem("mauricarnet_enc_salt", salt);
             setUser(u);
             localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
             localStorage.setItem("mauricarnet_username", u.username);
             localStorage.setItem(SESSION_START_KEY, String(Date.now()));
-            const salt = crypto.randomUUID();
-            localStorage.setItem("mauricarnet_enc_salt", salt);
             initKey(pin, salt);
-            synchroniserUtilisateur(u.username);
+            synchroniserUtilisateur(u.username, pin, u.enc_salt || salt);
             return null;
           }
         } catch (err: any) {

@@ -1,4 +1,5 @@
-import { getTransactionsNonSynced, marquerSyncede, getProduits, getClients } from "./crud";
+import { getTransactionsNonSynced, marquerSyncede, getProduits, getClients, getUsersPendingSync, updateUserAuthUid } from "./crud";
+import { getDB } from "./db";
 
 function getJwt(): string {
   if (typeof window === "undefined") return "";
@@ -7,6 +8,40 @@ function getJwt(): string {
 
 function hasJwt(): boolean {
   return !!getJwt();
+}
+
+export async function syncPendingUsers(): Promise<void> {
+  const pending = await getUsersPendingSync();
+  if (pending.length === 0) return;
+  const jwt = getJwt();
+  if (!jwt) return;
+  for (const u of pending) {
+    const pin = localStorage.getItem(`mauricarnet_pin_${u.username}`);
+    if (!pin) continue;
+    try {
+      const res = await fetch("/api/sync/user", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${jwt}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: u.id,
+          username: u.username,
+          pin,
+          pin_hash: u.pin_hash,
+          enc_salt: u.enc_salt,
+          created_at: u.created_at.toISOString(),
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.auth_uid) {
+          await updateUserAuthUid(u.id!, data.auth_uid);
+        }
+        localStorage.removeItem(`mauricarnet_pin_${u.username}`);
+      }
+    } catch (err) {
+      console.error("Échec sync utilisateur", u.username, err);
+    }
+  }
 }
 
 export async function synchroniser(userId: number): Promise<{ ok: number; echec: number }> {
@@ -76,7 +111,7 @@ export async function synchroniser(userId: number): Promise<{ ok: number; echec:
   }
 }
 
-export async function synchroniserUtilisateur(username: string): Promise<void> {
+export async function synchroniserUtilisateur(username: string, pin?: string, enc_salt?: string): Promise<void> {
   const jwt = getJwt();
   if (!jwt && !hasJwt()) return;
 
@@ -88,6 +123,7 @@ export async function synchroniserUtilisateur(username: string): Promise<void> {
       : "";
 
   try {
+    const u = await getDB().users.where("username").equals(username).first();
     const authHeader = jwt ? `Bearer ${jwt}` : `Bearer ${token}`;
     await fetch("/api/sync/user", {
       method: "POST",
@@ -96,7 +132,10 @@ export async function synchroniserUtilisateur(username: string): Promise<void> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        id: u?.id,
         username,
+        pin,
+        enc_salt,
         created_at: new Date().toISOString(),
       }),
     });

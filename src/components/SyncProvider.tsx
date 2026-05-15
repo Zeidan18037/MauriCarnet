@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { synchroniser } from "@/lib/sync";
+import { synchroniser, syncPendingUsers } from "@/lib/sync";
 
 const SYNC_INTERVAL = 60000;
 
@@ -37,11 +37,13 @@ export default function SyncProvider({ children }: { children?: ReactNode }) {
     };
     navigator.serviceWorker?.addEventListener("message", handler);
 
-    const interval = setInterval(() => {
+    const tick = () => {
+      syncPendingUsers();
       synchroniser(uid);
-    }, SYNC_INTERVAL);
+    };
 
-    synchroniser(uid);
+    const interval = setInterval(tick, SYNC_INTERVAL);
+    tick();
 
     return () => {
       navigator.serviceWorker?.removeEventListener("message", handler);

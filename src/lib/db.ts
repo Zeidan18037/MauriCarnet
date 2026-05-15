@@ -44,6 +44,8 @@ export interface User {
   username: string;
   pin_hash: string;
   created_at: Date;
+  auth_uid?: string | null;
+  enc_salt?: string | null;
 }
 
 let db: MauriCarnetDB | null = null;

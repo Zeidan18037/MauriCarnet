@@ -35,7 +35,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Sync non configuré" }, { status: 503 });
   }
 
-  const { username, created_at } = await request.json();
+  const body = await request.json();
+  const { username, created_at, id, pin, pin_hash, enc_salt } = body;
 
   if (!username || typeof username !== "string" || username.length < 2) {
     return NextResponse.json({ error: "username requis (min 2 caractères)" }, { status: 400 });
@@ -54,6 +55,38 @@ export async function POST(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  // Register new user (from offline registration) — create Supabase Auth user
+  if (pin) {
+    const email = `${username.toLowerCase().replace(/\s+/g, "-")}@mauricarnet.app`;
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: pin,
+      email_confirm: true,
+      user_metadata: { username },
+    });
+    if (authError && !authError.message?.includes("already exists")) {
+      return NextResponse.json({ error: authError.message }, { status: 500 });
+    }
+    if (authData?.user?.id) {
+      const { error: upsertError } = await supabase.from("users").upsert(
+        {
+          id: id || undefined,
+          username,
+          auth_uid: authData.user.id,
+          enc_salt: enc_salt || null,
+          pin_hash: pin_hash || "",
+          created_at: created_at ?? new Date().toISOString(),
+        },
+        { onConflict: "username", ignoreDuplicates: true }
+      );
+      if (upsertError) {
+        return NextResponse.json({ error: upsertError.message }, { status: 500 });
+      }
+      return NextResponse.json({ ok: true, auth_uid: authData.user.id });
+    }
+  }
+
+  // Upsert username only (existing user sync)
   const { error } = await supabase.from("users").upsert(
     { username, created_at: created_at ?? new Date().toISOString() },
     { onConflict: "username", ignoreDuplicates: true }

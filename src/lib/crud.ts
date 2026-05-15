@@ -381,12 +381,22 @@ export async function registerUser(
   const existant = await d().users.where("username").equals(username).first();
   if (existant) throw new Error("Ce nom d'utilisateur est déjà pris");
   const pin_hash = await hashPin(pin);
+  const enc_salt = crypto.randomUUID();
+  const auth_uid = crypto.randomUUID();
   const id = await d().users.add({
-    username,
-    pin_hash,
-    created_at: new Date(),
+    username, pin_hash, created_at: new Date(),
+    auth_uid, enc_salt,
   } as User);
-  return { id, username, pin_hash, created_at: new Date() };
+  localStorage.setItem(`mauricarnet_pin_${username}`, pin);
+  return { id, username, pin_hash, created_at: new Date(), auth_uid, enc_salt };
+}
+
+export async function getUsersPendingSync(): Promise<User[]> {
+  return d().users.filter((u) => !u.auth_uid || u.auth_uid.length < 20).toArray();
+}
+
+export async function updateUserAuthUid(id: number, auth_uid: string): Promise<void> {
+  await d().users.update(id, { auth_uid });
 }
 
 export async function loginUser(
