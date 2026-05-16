@@ -430,7 +430,7 @@ export async function getUsersCount(): Promise<number> {
   return d().users.count();
 }
 
-const SESSION_TIMEOUT_MS = 15 * 60 * 1000;
+const SESSION_TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function getSessionTimeout(): number {
   return SESSION_TIMEOUT_MS;

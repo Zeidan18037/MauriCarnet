@@ -88,7 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let timeout: ReturnType<typeof setTimeout>;
     function resetTimer() {
       clearTimeout(timeout);
-      timeout = setTimeout(logout, getSessionTimeout());
+      timeout = setTimeout(() => {
+        setJwt(null);
+        localStorage.removeItem(JWT_KEY);
+      }, getSessionTimeout());
     }
     const events = ["mousedown", "touchstart", "keydown", "scroll"];
     events.forEach((e) => window.addEventListener(e, resetTimer));
@@ -97,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTimeout(timeout);
       events.forEach((e) => window.removeEventListener(e, resetTimer));
     };
-  }, [user, logout]);
+  }, [user]);
 
   const login = useCallback(
     async (username: string, pin: string): Promise<string | null> => {
@@ -139,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               enc_salt: data.user.enc_salt || null,
             };
             setUser(u);
-            localStorage.setItem(SESSION_KEY, JSON.stringify({ id: u.id, username: u.username, loginTime: Date.now() }));
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ ...u, loginTime: Date.now() }));
             const salt = data.user.enc_salt || localStorage.getItem("mauricarnet_enc_salt") || "";
             if (salt) localStorage.setItem("mauricarnet_enc_salt", salt);
             initKey(pin, salt || username);
@@ -156,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const u = await loginUser(username, pin);
           if (u) {
             setUser(u);
-            localStorage.setItem(SESSION_KEY, JSON.stringify({ id: u.id, username: u.username, loginTime: Date.now() }));
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ ...u, loginTime: Date.now() }));
             const salt = localStorage.getItem("mauricarnet_enc_salt") || "";
             initKey(pin, salt || username);
             synchroniserUtilisateur(u.username);
@@ -218,7 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               enc_salt: data.user.enc_salt,
             };
             setUser(u);
-            localStorage.setItem(SESSION_KEY, JSON.stringify({ id: u.id, username: u.username, loginTime: Date.now() }));
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ ...u, loginTime: Date.now() }));
             localStorage.setItem("mauricarnet_enc_salt", encSalt);
             initKey(pin, encSalt);
             synchroniser(localId);
@@ -237,7 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const salt = u.enc_salt || crypto.randomUUID();
             localStorage.setItem("mauricarnet_enc_salt", salt);
             setUser(u);
-            localStorage.setItem(SESSION_KEY, JSON.stringify({ id: u.id, username: u.username, loginTime: Date.now() }));
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ ...u, loginTime: Date.now() }));
             initKey(pin, salt);
             synchroniserUtilisateur(u.username, pin, u.enc_salt || salt);
             return null;
