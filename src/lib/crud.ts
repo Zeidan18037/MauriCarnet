@@ -1,5 +1,5 @@
 import { getDB, type Categorie, type Produit, type Client, type Transaction, type User } from "./db";
-import { encrypt, decrypt, isKeyReady } from "./crypto";
+import { encrypt, decrypt } from "./crypto";
 
 function d() {
   return getDB();
@@ -9,7 +9,6 @@ const PRODUIT_ENC_FIELDS = ["nom"] as const;
 const CLIENT_ENC_FIELDS = ["nom", "telephone"] as const;
 
 async function encryptFields<T extends Record<string, any>>(obj: T, fields: readonly (keyof T)[]): Promise<T> {
-  if (!isKeyReady()) return obj;
   const r = { ...obj };
   for (const f of fields) {
     if (r[f] !== undefined && r[f] !== null) r[f] = (await encrypt(String(r[f]))) as any;
@@ -18,7 +17,6 @@ async function encryptFields<T extends Record<string, any>>(obj: T, fields: read
 }
 
 async function decryptFields<T extends Record<string, any>>(obj: T, fields: readonly (keyof T)[]): Promise<T> {
-  if (!isKeyReady()) return obj;
   const r = { ...obj };
   for (const f of fields) {
     if (r[f] !== undefined && r[f] !== null) try { r[f] = (await decrypt(String(r[f]))) as any; } catch {}
@@ -440,14 +438,12 @@ export function getSessionTimeout(): number {
 
 export function getCurrentSession(): { id: number; username: string } | null {
   try {
-    const saved = localStorage.getItem("mauricarnet_user");
+    const saved = localStorage.getItem("mauricarnet_session");
     if (!saved) return null;
     const session = JSON.parse(saved);
     if (session && typeof session.id === "number") {
-      const stored = localStorage.getItem("mauricarnet_session_start");
-      if (stored && Date.now() - parseInt(stored) > SESSION_TIMEOUT_MS) {
-        localStorage.removeItem("mauricarnet_user");
-        localStorage.removeItem("mauricarnet_session_start");
+      if (session.loginTime && Date.now() - session.loginTime > SESSION_TIMEOUT_MS) {
+        localStorage.removeItem("mauricarnet_session");
         return null;
       }
       return { id: session.id, username: session.username };

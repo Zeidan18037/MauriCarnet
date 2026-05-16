@@ -3,6 +3,7 @@
 import { useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { synchroniser, syncPendingUsers } from "@/lib/sync";
+import { pullUserData } from "@/lib/pull";
 
 const SYNC_INTERVAL = 60000;
 
@@ -40,6 +41,7 @@ export default function SyncProvider({ children }: { children?: ReactNode }) {
     const tick = () => {
       syncPendingUsers();
       synchroniser(uid);
+      if (jwt) pullUserData(uid, jwt);
     };
 
     const interval = setInterval(tick, SYNC_INTERVAL);

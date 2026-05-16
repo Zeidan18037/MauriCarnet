@@ -46,6 +46,7 @@ export interface User {
   created_at: Date;
   auth_uid?: string | null;
   enc_salt?: string | null;
+  role?: string;
 }
 
 let db: MauriCarnetDB | null = null;

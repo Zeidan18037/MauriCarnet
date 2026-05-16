@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   }
 
   const authUid = data.user.id;
-  let { data: userRow, error: dbError } = await supabaseAdmin
+  const { data: userRow, error: dbError } = await supabaseAdmin
     .from("users")
     .select("id, username, auth_uid, enc_salt")
     .eq("auth_uid", authUid)

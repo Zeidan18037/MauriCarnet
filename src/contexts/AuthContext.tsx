@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { registerUser, loginUser, getUsersCount, getSessionTimeout, hashPin } from "@/lib/crud";
-import { synchroniserUtilisateur } from "@/lib/sync";
+import { synchroniserUtilisateur, synchroniser } from "@/lib/sync";
 import { pullUserData } from "@/lib/pull";
 import { initKey, clearKey } from "@/lib/crypto";
 import { getDB, type User } from "@/lib/db";
@@ -34,8 +34,7 @@ const AuthContext = createContext<AuthCtx>({
   logout: () => {},
 });
 
-const STORAGE_KEY = "mauricarnet_user";
-const SESSION_START_KEY = "mauricarnet_session_start";
+const SESSION_KEY = "mauricarnet_session";
 const JWT_KEY = "mauricarnet_jwt";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -52,20 +51,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const savedJwt = localStorage.getItem(JWT_KEY);
       if (savedJwt) setJwt(savedJwt);
 
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(SESSION_KEY);
       if (saved) {
         try {
           const session = JSON.parse(saved);
-          const started = localStorage.getItem(SESSION_START_KEY);
-          if (started && Date.now() - parseInt(started) > getSessionTimeout()) {
-            localStorage.removeItem(STORAGE_KEY);
-            localStorage.removeItem(SESSION_START_KEY);
+          if (session.loginTime && Date.now() - session.loginTime > getSessionTimeout()) {
+            localStorage.removeItem(SESSION_KEY);
           } else if (session && typeof session.id === "number") {
-            setUser(session as User);
-            localStorage.setItem("mauricarnet_username", session.username);
+            setUser({ ...session } as User);
           }
         } catch {
-          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(SESSION_KEY);
         }
       }
       setLoading(false);
@@ -83,9 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setJwt(null);
     clearKey();
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(SESSION_START_KEY);
-    localStorage.removeItem("mauricarnet_username");
+    localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(JWT_KEY);
   }, [jwt]);
 
@@ -122,20 +116,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.setItem(JWT_KEY, accessToken);
           }
           if (data.user) {
+            const db = getDB();
+            let localUser = await db.users.where("username").equals(data.user.username).first();
+            if (!localUser) {
+              const newId = await db.users.add({
+                username: data.user.username,
+                auth_uid: data.user.auth_uid,
+                pin_hash: "",
+                enc_salt: data.user.enc_salt || null,
+                created_at: new Date(),
+              } as User);
+              localUser = (await db.users.get(newId)) as User;
+            }
+            if (!localUser || !localUser.id) return "Erreur lors de la récupération de l'utilisateur";
+            const localId = localUser.id;
             const u: User = {
-              id: data.user.id,
+              id: localId,
               username: data.user.username,
               pin_hash: "",
               created_at: new Date(),
+              auth_uid: data.user.auth_uid,
+              enc_salt: data.user.enc_salt || null,
             };
             setUser(u);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
-            localStorage.setItem("mauricarnet_username", u.username);
-            localStorage.setItem(SESSION_START_KEY, String(Date.now()));
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ id: u.id, username: u.username, loginTime: Date.now() }));
             const salt = data.user.enc_salt || localStorage.getItem("mauricarnet_enc_salt") || "";
             if (salt) localStorage.setItem("mauricarnet_enc_salt", salt);
             initKey(pin, salt || username);
-            pullUserData(data.user.id, accessToken);
+            synchroniser(localId);
+            pullUserData(localId, accessToken);
             return null;
           }
         }
@@ -147,9 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const u = await loginUser(username, pin);
           if (u) {
             setUser(u);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
-            localStorage.setItem("mauricarnet_username", u.username);
-            localStorage.setItem(SESSION_START_KEY, String(Date.now()));
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ id: u.id, username: u.username, loginTime: Date.now() }));
             const salt = localStorage.getItem("mauricarnet_enc_salt") || "";
             initKey(pin, salt || username);
             synchroniserUtilisateur(u.username);
@@ -188,29 +195,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (data.user) {
             const db = getDB();
             const existing = await db.users.where("username").equals(username).first();
+            let localId: number;
             if (existing) {
-              await db.users.update(existing.id!, { pin_hash });
+              await db.users.update(existing.id!, { pin_hash, auth_uid: data.user.auth_uid, enc_salt: data.user.enc_salt });
+              localId = existing.id!;
             } else {
-              await db.users.add({
-                id: data.user.id,
+              localId = await db.users.add({
                 username: data.user.username,
                 pin_hash,
+                auth_uid: data.user.auth_uid,
+                enc_salt: data.user.enc_salt,
                 created_at: new Date(),
               } as User);
             }
 
             const u: User = {
-              id: data.user.id,
+              id: localId,
               username: data.user.username,
               pin_hash,
               created_at: new Date(),
+              auth_uid: data.user.auth_uid,
+              enc_salt: data.user.enc_salt,
             };
             setUser(u);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
-            localStorage.setItem("mauricarnet_username", u.username);
-            localStorage.setItem(SESSION_START_KEY, String(Date.now()));
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ id: u.id, username: u.username, loginTime: Date.now() }));
             localStorage.setItem("mauricarnet_enc_salt", encSalt);
             initKey(pin, encSalt);
+            synchroniser(localId);
             return null;
           }
         } else {
@@ -226,9 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const salt = u.enc_salt || crypto.randomUUID();
             localStorage.setItem("mauricarnet_enc_salt", salt);
             setUser(u);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
-            localStorage.setItem("mauricarnet_username", u.username);
-            localStorage.setItem(SESSION_START_KEY, String(Date.now()));
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ id: u.id, username: u.username, loginTime: Date.now() }));
             initKey(pin, salt);
             synchroniserUtilisateur(u.username, pin, u.enc_salt || salt);
             return null;

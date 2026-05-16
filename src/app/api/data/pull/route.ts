@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     supabaseAdmin.from("produits").select("*").eq("user_id", userId),
     supabaseAdmin.from("clients").select("*").eq("user_id", userId),
     supabaseAdmin.from("transactions").select("*").eq("user_id", userId),
-    supabaseAdmin.from("categories").select("*"),
+    supabaseAdmin.from("categories").select("*").eq("user_id", userId),
   ]);
 
   return NextResponse.json({

@@ -1,10 +1,12 @@
 import { getDB, type Produit, type Client, type Transaction } from "./db";
 
-export async function pullUserData(userId: number, jwt: string): Promise<void> {
-  const db = getDB();
+const LAST_PULL_KEY = "mauricarnet_last_pull";
+const PULL_COOLDOWN_MS = 30_000;
 
-  const existingProduits = await db.produits.where("user_id").equals(userId).count();
-  if (existingProduits > 0) return;
+export async function pullUserData(localUserId: number, jwt: string): Promise<void> {
+  const db = getDB();
+  const lastPull = localStorage.getItem(LAST_PULL_KEY);
+  if (lastPull && Date.now() - parseInt(lastPull) < PULL_COOLDOWN_MS) return;
 
   try {
     const res = await fetch("/api/data/pull", {
@@ -22,27 +24,32 @@ export async function pullUserData(userId: number, jwt: string): Promise<void> {
 
     if (data.produits?.length > 0) {
       for (const p of data.produits) {
-        await db.produits.put({ ...p, id: p.id, user_id: userId } as Produit);
+        await db.produits.put({ ...p, id: p.id, user_id: localUserId } as Produit);
       }
     }
 
     if (data.clients?.length > 0) {
       for (const c of data.clients) {
-        await db.clients.put({ ...c, id: c.id, user_id: userId } as Client);
+        await db.clients.put({ ...c, id: c.id, user_id: localUserId } as Client);
       }
     }
 
     if (data.transactions?.length > 0) {
       for (const t of data.transactions) {
-        await db.transactions.put({
-          ...t,
-          id: t.id,
-          user_id: userId,
-          synced: 1,
-          timestamp: new Date(t.timestamp),
-        } as Transaction);
+        const existing = await db.transactions.where("id").equals(t.id).first();
+        if (!existing || existing.synced === 1) {
+          await db.transactions.put({
+            ...t,
+            id: t.id,
+            user_id: localUserId,
+            synced: 1,
+            timestamp: new Date(t.timestamp),
+          } as Transaction);
+        }
       }
     }
+
+    localStorage.setItem(LAST_PULL_KEY, String(Date.now()));
   } catch (err) {
     console.error("Échec pull data:", err);
   }

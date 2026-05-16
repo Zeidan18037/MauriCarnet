@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, health: true });
   }
 
-  const { produits, clients, transactions, userId, username } = body;
+  const { produits, clients, transactions, categories, userId } = body;
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         { id: p.id, nom: p.nom, prix_achat: p.prix_achat ?? 0,
           prix_vente: p.prix_vente ?? 0, stock_actuel: p.stock_actuel ?? 0,
           categorie_id: p.categorie_id ?? null, user_id: userIdFinal },
-        { onConflict: "id", ignoreDuplicates: true }
+        { onConflict: "id", ignoreDuplicates: false }
       );
       if (error) console.error("Échec sync produit", p.id, error);
     }
@@ -69,15 +69,26 @@ export async function POST(request: Request) {
       const { error } = await supabase.from("clients").upsert(
         { id: c.id, nom: c.nom, telephone: c.telephone ?? "",
           total_dette: c.total_dette ?? 0, user_id: userIdFinal },
-        { onConflict: "id", ignoreDuplicates: true }
+        { onConflict: "id", ignoreDuplicates: false }
       );
       if (error) console.error("Échec sync client", c.id, error);
     }
   }
 
+  if (categories && Array.isArray(categories)) {
+    for (const c of categories) {
+      const { error } = await supabase.from("categories").upsert(
+        { id: c.id, nom: c.nom, nom_ar: c.nom_ar ?? null, icone: c.icone ?? "", user_id: userIdFinal },
+        { onConflict: "id", ignoreDuplicates: false }
+      );
+      if (error) console.error("Échec sync catégorie", c.id, error);
+    }
+  }
+
   if (transactions && Array.isArray(transactions)) {
     for (const t of transactions) {
-      const { error } = await supabase.from("transactions").insert({
+      const { error } = await supabase.from("transactions").upsert({
+        id: t.id,
         user_id: userIdFinal,
         produit_id: t.produit_id,
         client_id: t.client_id ?? null,
@@ -86,7 +97,7 @@ export async function POST(request: Request) {
         reste_a_payer: t.reste_a_payer,
         quantite: t.quantite ?? 0,
         timestamp: t.timestamp ?? new Date().toISOString(),
-      });
+      }, { onConflict: "id", ignoreDuplicates: false });
       if (error) {
         console.error("Échec sync transaction", t.id, error);
         echec++;

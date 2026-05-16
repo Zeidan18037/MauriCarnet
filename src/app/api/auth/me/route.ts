@@ -31,6 +31,7 @@ export async function GET(request: Request) {
       username: userRow.username,
       auth_uid: userRow.auth_uid,
       created_at: userRow.created_at,
+      role: authUser.app_metadata?.role || "user",
     },
   });
 }

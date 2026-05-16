@@ -1,13 +1,9 @@
-import { getTransactionsNonSynced, marquerSyncede, getProduits, getClients, getUsersPendingSync, updateUserAuthUid } from "./crud";
+import { getTransactionsNonSynced, marquerSyncede, getProduits, getClients, getCategories, getUsersPendingSync, updateUserAuthUid } from "./crud";
 import { getDB } from "./db";
 
 function getJwt(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("mauricarnet_jwt") || "";
-}
-
-function hasJwt(): boolean {
-  return !!getJwt();
 }
 
 export async function syncPendingUsers(): Promise<void> {
@@ -44,16 +40,17 @@ export async function syncPendingUsers(): Promise<void> {
   }
 }
 
-export async function synchroniser(userId: number): Promise<{ ok: number; echec: number }> {
-  const [transactions, produits, clients] = await Promise.all([
-    getTransactionsNonSynced(userId),
-    getProduits(userId),
-    getClients(userId),
-  ]);
-  if (transactions.length === 0 && produits.length === 0 && clients.length === 0) return { ok: 0, echec: 0 };
-
+export async function synchroniser(localUserId: number): Promise<{ ok: number; echec: number }> {
   const jwt = getJwt();
-  if (!jwt) return { ok: 0, echec: transactions.length };
+  if (!jwt) return { ok: 0, echec: 0 };
+
+  const [transactions, produits, clients, categories] = await Promise.all([
+    getTransactionsNonSynced(localUserId),
+    getProduits(localUserId),
+    getClients(localUserId),
+    getCategories(localUserId),
+  ]);
+  if (transactions.length === 0 && produits.length === 0 && clients.length === 0 && categories.length === 0) return { ok: 0, echec: 0 };
 
   try {
     const res = await fetch("/api/sync", {
@@ -63,8 +60,6 @@ export async function synchroniser(userId: number): Promise<{ ok: number; echec:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        username: localStorage.getItem("mauricarnet_username") || undefined,
-        userId,
         produits: produits.map((p) => ({
           id: p.id,
           nom: p.nom,
@@ -88,6 +83,12 @@ export async function synchroniser(userId: number): Promise<{ ok: number; echec:
           reste_a_payer: t.reste_a_payer,
           quantite: t.quantite,
           timestamp: t.timestamp.toISOString(),
+        })),
+        categories: categories.map((c) => ({
+          id: c.id,
+          nom: c.nom,
+          nom_ar: c.nom_ar,
+          icone: c.icone,
         })),
       }),
     });
@@ -113,24 +114,13 @@ export async function synchroniser(userId: number): Promise<{ ok: number; echec:
 
 export async function synchroniserUtilisateur(username: string, pin?: string, enc_salt?: string): Promise<void> {
   const jwt = getJwt();
-  if (!jwt && !hasJwt()) return;
-
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("mauricarnet_api_token") ||
-        localStorage.getItem("API_SYNC_TOKEN") ||
-        ""
-      : "";
+  if (!jwt) return;
 
   try {
     const u = await getDB().users.where("username").equals(username).first();
-    const authHeader = jwt ? `Bearer ${jwt}` : `Bearer ${token}`;
     await fetch("/api/sync/user", {
       method: "POST",
-      headers: {
-        Authorization: authHeader,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${jwt}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         id: u?.id,
         username,

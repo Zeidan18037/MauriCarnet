@@ -31,9 +31,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  if (hasLegacyToken && !API_TOKEN && !PUBLIC_TOKEN) {
-    return NextResponse.json({ error: "Sync non configuré" }, { status: 503 });
-  }
+
 
   const body = await request.json();
   const { username, created_at, id, pin, pin_hash, enc_salt } = body;
@@ -70,7 +68,7 @@ export async function POST(request: Request) {
     if (authData?.user?.id) {
       const { error: upsertError } = await supabase.from("users").upsert(
         {
-          id: id || undefined,
+          id: id ?? undefined,
           username,
           auth_uid: authData.user.id,
           enc_salt: enc_salt || null,
