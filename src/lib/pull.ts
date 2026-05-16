@@ -1,12 +1,16 @@
-import { getDB, type Produit, type Client, type Transaction } from "./db";
+import { getValidJwt } from "./refresh";
+import { getDB, type Produit, type Client, type Transaction, type Categorie } from "./db";
 
 const LAST_PULL_KEY = "mauricarnet_last_pull";
 const PULL_COOLDOWN_MS = 30_000;
 
-export async function pullUserData(localUserId: number, jwt: string): Promise<void> {
+export async function pullUserData(localUserId: number, jwt?: string): Promise<void> {
   const db = getDB();
   const lastPull = localStorage.getItem(LAST_PULL_KEY);
   if (lastPull && Date.now() - parseInt(lastPull) < PULL_COOLDOWN_MS) return;
+
+  if (!jwt) jwt = (await getValidJwt()) ?? undefined;
+  if (!jwt) return;
 
   try {
     const res = await fetch("/api/data/pull", {
@@ -18,19 +22,19 @@ export async function pullUserData(localUserId: number, jwt: string): Promise<vo
 
     if (data.categories?.length > 0) {
       for (const cat of data.categories) {
-        await db.categories.put({ ...cat, id: cat.id });
+        await db.categories.put({ ...cat, id: cat.id, synced: 1 } as Categorie);
       }
     }
 
     if (data.produits?.length > 0) {
       for (const p of data.produits) {
-        await db.produits.put({ ...p, id: p.id, user_id: localUserId } as Produit);
+        await db.produits.put({ ...p, id: p.id, user_id: localUserId, synced: 1 } as Produit);
       }
     }
 
     if (data.clients?.length > 0) {
       for (const c of data.clients) {
-        await db.clients.put({ ...c, id: c.id, user_id: localUserId } as Client);
+        await db.clients.put({ ...c, id: c.id, user_id: localUserId, synced: 1 } as Client);
       }
     }
 

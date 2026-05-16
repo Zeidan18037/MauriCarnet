@@ -45,3 +45,9 @@ supabase/.temp/
 next-env.d.ts
 
 .vercel
+
+# Playwright
+.playwright-mcp/
+e2e/
+playwright.config.ts
+test-results/

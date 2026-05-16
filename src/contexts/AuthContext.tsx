@@ -36,6 +36,8 @@ const AuthContext = createContext<AuthCtx>({
 
 const SESSION_KEY = "mauricarnet_session";
 const JWT_KEY = "mauricarnet_jwt";
+const REFRESH_TOKEN_KEY = "mauricarnet_refresh_token";
+const SESSION_INACTIVITY_MS = 3 * 24 * 60 * 60 * 1000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -81,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearKey();
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(JWT_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
   }, [jwt]);
 
   useEffect(() => {
@@ -90,8 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
         setJwt(null);
-        localStorage.removeItem(JWT_KEY);
-      }, getSessionTimeout());
+        // Ne pas supprimer le JWT/refresh du localStorage pour permettre un refresh silencieux
+      }, SESSION_INACTIVITY_MS);
     }
     const events = ["mousedown", "touchstart", "keydown", "scroll"];
     events.forEach((e) => window.addEventListener(e, resetTimer));
@@ -117,6 +120,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (accessToken) {
             setJwt(accessToken);
             localStorage.setItem(JWT_KEY, accessToken);
+          }
+          const refreshToken = data.session?.refresh_token;
+          if (refreshToken) {
+            localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
           }
           if (data.user) {
             const db = getDB();
@@ -147,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (salt) localStorage.setItem("mauricarnet_enc_salt", salt);
             initKey(pin, salt || username);
             synchroniser(localId);
-            pullUserData(localId, accessToken);
+            pullUserData(localId);
             return null;
           }
         }
@@ -193,6 +200,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (data.session?.access_token) {
             setJwt(data.session.access_token);
             localStorage.setItem(JWT_KEY, data.session.access_token);
+          }
+          const refreshToken = data.session?.refresh_token;
+          if (refreshToken) {
+            localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
           }
 
           if (data.user) {

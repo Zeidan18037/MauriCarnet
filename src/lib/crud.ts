@@ -5,6 +5,11 @@ function d() {
   return getDB();
 }
 
+function requestImmediateSync(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("mauricarnet-immediate-sync"));
+}
+
 const PRODUIT_ENC_FIELDS = ["nom"] as const;
 const CLIENT_ENC_FIELDS = ["nom", "telephone"] as const;
 
@@ -60,7 +65,9 @@ export async function ajouterProduit(
   p: Omit<Produit, "id"> & { user_id: number }
 ): Promise<number> {
   await verifierNomUnique(p.nom, p.user_id);
-  return d().produits.add((await encryptFields(p, PRODUIT_ENC_FIELDS)) as Produit);
+  const id = await d().produits.add({ ...(await encryptFields(p, PRODUIT_ENC_FIELDS)), synced: 0 } as Produit);
+  requestImmediateSync();
+  return id;
 }
 
 export async function modifierProduit(
@@ -71,11 +78,14 @@ export async function modifierProduit(
     const old = await d().produits.get(id);
     if (old && old.user_id) await verifierNomUnique(p.nom, old.user_id, id);
   }
-  return d().produits.update(id, await encryptFields(p, PRODUIT_ENC_FIELDS));
+  const r = await d().produits.update(id, { ...(await encryptFields(p, PRODUIT_ENC_FIELDS)), synced: 0 });
+  requestImmediateSync();
+  return r;
 }
 
 export async function supprimerProduit(id: number): Promise<void> {
-  return d().produits.delete(id);
+  await d().produits.delete(id);
+  requestImmediateSync();
 }
 
 /* ───── Clients ───── */
@@ -93,18 +103,23 @@ export async function getClient(id: number): Promise<Client | undefined> {
 export async function ajouterClient(
   c: Omit<Client, "id"> & { user_id: number }
 ): Promise<number> {
-  return d().clients.add((await encryptFields(c, CLIENT_ENC_FIELDS)) as Client);
+  const id = await d().clients.add({ ...(await encryptFields(c, CLIENT_ENC_FIELDS)), synced: 0 } as Client);
+  requestImmediateSync();
+  return id;
 }
 
 export async function modifierClient(
   id: number,
   c: Partial<Client>
 ): Promise<number> {
-  return d().clients.update(id, await encryptFields(c, CLIENT_ENC_FIELDS));
+  const r = await d().clients.update(id, { ...(await encryptFields(c, CLIENT_ENC_FIELDS)), synced: 0 });
+  requestImmediateSync();
+  return r;
 }
 
 export async function supprimerClient(id: number): Promise<void> {
-  return d().clients.delete(id);
+  await d().clients.delete(id);
+  requestImmediateSync();
 }
 
 export async function chercherClients(
@@ -192,7 +207,7 @@ export async function ajouterTransaction(
       );
   }
 
-  return d().transaction(
+  const id = await d().transaction(
     "rw",
     d().transactions,
     d().produits,
@@ -221,13 +236,18 @@ export async function ajouterTransaction(
       return id;
     }
   );
+
+  requestImmediateSync();
+  return id;
 }
 
 export async function modifierTransaction(
   id: number,
   t: Partial<Transaction>
 ): Promise<number> {
-  return d().transactions.update(id, t);
+  const r = await d().transactions.update(id, { ...t, synced: 0 });
+  requestImmediateSync();
+  return r;
 }
 
 export async function supprimerTransaction(id: number): Promise<void> {
@@ -261,6 +281,8 @@ export async function supprimerTransaction(id: number): Promise<void> {
       }
     }
   );
+
+  requestImmediateSync();
 }
 
 export async function getTransactionsNonSynced(userId: number): Promise<Transaction[]> {
@@ -273,6 +295,42 @@ export async function getTransactionsNonSynced(userId: number): Promise<Transact
 
 export async function marquerSyncede(id: number): Promise<number> {
   return d().transactions.update(id, { synced: 1 } as Partial<Transaction>);
+}
+
+export async function getProduitsNonSynced(userId: number): Promise<Produit[]> {
+  return d()
+    .produits
+    .where("user_id").equals(userId)
+    .filter((p) => p.synced === 0)
+    .toArray();
+}
+
+export async function getClientsNonSynced(userId: number): Promise<Client[]> {
+  return d()
+    .clients
+    .where("user_id").equals(userId)
+    .filter((c) => c.synced === 0)
+    .toArray();
+}
+
+export async function getCategoriesNonSynced(userId: number): Promise<Categorie[]> {
+  return d()
+    .categories
+    .where("user_id").equals(userId)
+    .filter((c) => c.synced === 0)
+    .toArray();
+}
+
+export async function marquerSyncedeProduit(id: number): Promise<number> {
+  return d().produits.update(id, { synced: 1 } as Partial<Produit>);
+}
+
+export async function marquerSyncedeClient(id: number): Promise<number> {
+  return d().clients.update(id, { synced: 1 } as Partial<Client>);
+}
+
+export async function marquerSyncedeCategorie(id: number): Promise<number> {
+  return d().categories.update(id, { synced: 1 } as Partial<Categorie>);
 }
 
 /* ───── Dettes ───── */
@@ -293,6 +351,8 @@ export async function recalculerDettes(userId: number): Promise<void> {
       .reduce((sum, t) => sum + (t.reste_a_payer || 0), 0);
     await d().clients.update(client.id!, { total_dette: total });
   }
+
+  requestImmediateSync();
 }
 
 /* ───── Auth ───── */
@@ -430,7 +490,7 @@ export async function getUsersCount(): Promise<number> {
   return d().users.count();
 }
 
-const SESSION_TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000;
+const SESSION_TIMEOUT_MS = 3 * 24 * 60 * 60 * 1000;
 
 export function getSessionTimeout(): number {
   return SESSION_TIMEOUT_MS;

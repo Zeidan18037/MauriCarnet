@@ -1,15 +1,11 @@
-import { getTransactionsNonSynced, marquerSyncede, getProduits, getClients, getCategories, getUsersPendingSync, updateUserAuthUid } from "./crud";
+import { getTransactionsNonSynced, marquerSyncede, getProduitsNonSynced, getClientsNonSynced, getCategoriesNonSynced, marquerSyncedeProduit, marquerSyncedeClient, marquerSyncedeCategorie, getUsersPendingSync, updateUserAuthUid } from "./crud";
+import { getValidJwt } from "./refresh";
 import { getDB } from "./db";
-
-function getJwt(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("mauricarnet_jwt") || "";
-}
 
 export async function syncPendingUsers(): Promise<void> {
   const pending = await getUsersPendingSync();
   if (pending.length === 0) return;
-  const jwt = getJwt();
+  const jwt = await getValidJwt();
   if (!jwt) return;
   for (const u of pending) {
     const pin = localStorage.getItem(`mauricarnet_pin_${u.username}`);
@@ -41,14 +37,14 @@ export async function syncPendingUsers(): Promise<void> {
 }
 
 export async function synchroniser(localUserId: number): Promise<{ ok: number; echec: number }> {
-  const jwt = getJwt();
+  const jwt = await getValidJwt();
   if (!jwt) return { ok: 0, echec: 0 };
 
   const [transactions, produits, clients, categories] = await Promise.all([
     getTransactionsNonSynced(localUserId),
-    getProduits(localUserId),
-    getClients(localUserId),
-    getCategories(localUserId),
+    getProduitsNonSynced(localUserId),
+    getClientsNonSynced(localUserId),
+    getCategoriesNonSynced(localUserId),
   ]);
   if (transactions.length === 0 && produits.length === 0 && clients.length === 0 && categories.length === 0) return { ok: 0, echec: 0 };
 
@@ -104,8 +100,17 @@ export async function synchroniser(localUserId: number): Promise<{ ok: number; e
         await marquerSyncede(id);
       }
     }
+    for (const p of produits) {
+      if (p.id) await marquerSyncedeProduit(p.id);
+    }
+    for (const c of clients) {
+      if (c.id) await marquerSyncedeClient(c.id);
+    }
+    for (const c of categories) {
+      if (c.id) await marquerSyncedeCategorie(c.id);
+    }
 
-    return { ok: result.syncedIds?.length || 0, echec: transactions.length - (result.syncedIds?.length || 0) };
+    return { ok: (result.syncedIds?.length || 0) + produits.length + clients.length + categories.length, echec: 0 };
   } catch (err) {
     console.error("Échec sync réseau", err);
     return { ok: 0, echec: transactions.length };
@@ -113,7 +118,7 @@ export async function synchroniser(localUserId: number): Promise<{ ok: number; e
 }
 
 export async function synchroniserUtilisateur(username: string, pin?: string, enc_salt?: string): Promise<void> {
-  const jwt = getJwt();
+  const jwt = await getValidJwt();
   if (!jwt) return;
 
   try {

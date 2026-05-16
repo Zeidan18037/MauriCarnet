@@ -6,6 +6,7 @@ export interface Categorie {
   nom: string;
   nom_ar?: string;
   icone: string;
+  synced?: number;
 }
 
 export interface Produit {
@@ -16,6 +17,7 @@ export interface Produit {
   prix_vente: number;
   stock_actuel: number;
   categorie_id?: number;
+  synced?: number;
 }
 
 export interface Client {
@@ -24,6 +26,7 @@ export interface Client {
   nom: string;
   telephone: string;
   total_dette: number;
+  synced?: number;
 }
 
 export interface Transaction {
@@ -78,6 +81,13 @@ class MauriCarnetDB extends Dexie {
       categories: "++id, nom, user_id",
       produits: "++id, &[user_id+nom], user_id",
       clients: "++id, nom, telephone, user_id",
+      transactions: "++id, produit_id, client_id, type, timestamp, synced, user_id",
+      users: "++id, &username",
+    });
+    this.version(6).stores({
+      categories: "++id, nom, user_id, [user_id+synced]",
+      produits: "++id, &[user_id+nom], user_id, [user_id+synced]",
+      clients: "++id, nom, telephone, user_id, [user_id+synced]",
       transactions: "++id, produit_id, client_id, type, timestamp, synced, user_id",
       users: "++id, &username",
     });
