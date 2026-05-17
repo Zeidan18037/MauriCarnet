@@ -38,6 +38,10 @@ export async function migrerAnciennesDonnees(userId: number): Promise<void> {
       for (const item of orphaned) {
         await table.update(item.id!, { user_id: userId } as any);
       }
+      const dead = await table.filter((r: any) => r.user_id !== userId && r.synced === 0).toArray();
+      for (const item of dead) {
+        await table.delete(item.id!);
+      }
     }
   });
 }

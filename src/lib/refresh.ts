@@ -27,11 +27,9 @@ export async function refreshJwt(): Promise<string | null> {
     try {
       const refreshToken = getRefreshToken();
       if (!refreshToken) {
-        console.log("[refresh] Aucun refresh_token dans localStorage");
         return null;
       }
 
-      console.log("[refresh] Tentative de refresh...");
       const res = await fetch("/api/auth/refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,7 +49,6 @@ export async function refreshJwt(): Promise<string | null> {
       if (data.refresh_token) {
         localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token);
       }
-      console.log("[refresh] Succès, nouveau JWT stocké");
       return data.access_token;
     } catch (err) {
       console.error("[refresh] Erreur réseau", err);
@@ -67,27 +64,15 @@ export async function refreshJwt(): Promise<string | null> {
 
 export async function getValidJwt(): Promise<string | null> {
   const current = getJwt();
-  if (!current) {
-    console.log("[getValidJwt] Aucun JWT dans localStorage");
-    return null;
-  }
+  if (!current) return null;
 
   const payload = tryParseJwt(current);
-  if (!payload) {
-    console.log("[getValidJwt] JWT non parseable, refresh...");
-    return refreshJwt();
-  }
+  if (!payload) return refreshJwt();
 
-  if (!payload.exp) {
-    console.log("[getValidJwt] JWT sans exp, refresh...");
-    return refreshJwt();
-  }
+  if (!payload.exp) return refreshJwt();
 
-  if (payload.exp * 1000 > Date.now() + 60000) {
-    return current;
-  }
+  if (payload.exp * 1000 > Date.now() + 60000) return current;
 
-  console.log("[getValidJwt] JWT expiré, refresh...");
   return refreshJwt();
 }
 
