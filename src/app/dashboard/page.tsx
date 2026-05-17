@@ -152,7 +152,7 @@ export default function DashboardPage() {
               <span className="text-xs text-emerald-600 font-medium">💵 {t("dashboard.cash")}</span>
             </div>
             <div className="card-soft bg-red-50 p-4 text-center">
-              <span className="text-xl text-red-700 font-bold block">↓ {totalDettesSolde} MRU</span>
+              <span className="text-xl text-red-700 font-bold block">⏳ {totalDettesSolde} MRU</span>
               <span className="text-xs text-red-600 font-medium">🔴 {t("dashboard.dettes")}</span>
             </div>
             <div className="card-soft bg-amber-50 p-4 text-center">

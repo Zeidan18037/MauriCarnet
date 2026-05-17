@@ -55,6 +55,7 @@ const ar: Record<string, string> = {
   "produits.categorie": "الفئة (اختياري)",
   "produits.general": "عام",
   "produits.achat_vente_stock": "شراء: {achat} | بيع: {vente} | مخزون: {stock}",
+  "produits.finaliser": "إنهاء المنتج",
 
   "clients.title": "العملاء",
   "clients.nouveau": "عميل جديد",
@@ -100,6 +101,7 @@ const ar: Record<string, string> = {
   "ventes.changer": "تغيير",
   "ventes.profit": "الربح",
   "ventes.frequents": "🔥 المنتجات المتكررة",
+  "ventes.finaliser": "إنهاء البيع",
 
   "auth.connexion": "تسجيل الدخول",
   "auth.inscription": "إنشاء حساب",

@@ -55,6 +55,7 @@ const fr: Record<string, string> = {
   "produits.categorie": "Catégorie (optionnelle)",
   "produits.general": "Général",
   "produits.achat_vente_stock": "Achat: {achat} | Vente: {vente} | Stock: {stock}",
+  "produits.finaliser": "Finaliser le produit",
 
   "clients.title": "Clients",
   "clients.nouveau": "Nouveau client",
@@ -100,6 +101,7 @@ const fr: Record<string, string> = {
   "ventes.changer": "Changer",
   "ventes.profit": "Profit",
   "ventes.frequents": "🔥 Produits fréquents",
+  "ventes.finaliser": "Finaliser la vente",
 
   "auth.connexion": "Connexion",
   "auth.inscription": "Inscription",

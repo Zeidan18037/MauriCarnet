@@ -205,7 +205,7 @@ export default function ClientsPage() {
           <div className="grid grid-cols-2 gap-2 mb-4">
             <div className="bg-red-100 border border-red-200 rounded-xl p-3 text-center shadow-sm">
               <span className="text-lg text-red-700 font-bold">
-                🔴 {t("clients.dettes")}: {totalDettes} MRU
+                ⏳ {t("clients.dettes")}: {totalDettes} MRU
               </span>
             </div>
             <div className="bg-emerald-100 border border-emerald-200 rounded-xl p-3 text-center shadow-sm">
@@ -251,14 +251,14 @@ export default function ClientsPage() {
             </div>
             <button
               onClick={() => ouvrirEdition(c)}
-              className="text-xs text-foreground/40 hover:text-primary transition-colors px-1"
+              className="flex items-center justify-center w-11 h-11 rounded-xl text-lg hover:bg-primary/10 transition-colors"
               title={t("common.editer")}
             >
               ✏️
             </button>
             <button
               onClick={() => setConfirmDelete(c.id!)}
-              className="text-xs text-foreground/40 hover:text-danger transition-colors"
+              className="flex items-center justify-center w-11 h-11 rounded-xl text-lg hover:bg-danger/10 transition-colors"
               title={t("common.supprimer")}
             >
               🗑️

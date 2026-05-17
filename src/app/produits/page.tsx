@@ -156,14 +156,14 @@ export default function ProduitsPage() {
                   </div>
                   <button
                     onClick={() => ouvrirEdition(p)}
-                    className="text-xs text-foreground/40 hover:text-primary transition-colors px-1"
+                    className="flex items-center justify-center w-11 h-11 rounded-xl text-lg hover:bg-primary/10 transition-colors"
                     title={t("common.editer")}
                   >
                     ✏️
                   </button>
                   <button
                     onClick={() => handleSupprimer(p.id!)}
-                    className="text-xs text-foreground/40 hover:text-danger transition-colors"
+                    className="flex items-center justify-center w-11 h-11 rounded-xl text-lg hover:bg-danger/10 transition-colors"
                     title={t("common.supprimer")}
                   >
                     🗑️
@@ -185,14 +185,9 @@ export default function ProduitsPage() {
               <h2 className="text-lg font-bold">
                 {t(editing ? "produits.modifier" : "produits.nouveau")}
               </h2>
-              <div className="flex items-center gap-3">
-                <button type="submit" className="text-primary font-semibold text-sm">
-                  ✓ Finaliser
-                </button>
-                <button type="button" onClick={() => setShowForm(false)} className="text-foreground/50">
-                  ✕
-                </button>
-              </div>
+              <button type="button" onClick={() => setShowForm(false)} className="text-foreground/50">
+                ✕
+              </button>
             </div>
 
             <select
@@ -239,6 +234,13 @@ export default function ProduitsPage() {
                 type="number"
               />
             </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-primary text-white rounded-xl font-semibold text-base mb-2"
+            >
+              ✓ {t("produits.finaliser")}
+            </button>
 
             <p className="text-center text-xs text-foreground/40 mt-2">
               {t("common.appuyer_finaliser")}

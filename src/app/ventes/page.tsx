@@ -196,7 +196,7 @@ export default function VentesPage() {
             </div>
             <div className="card-soft bg-red-50 p-3 text-center">
               <span className="text-lg text-red-700 font-bold block">
-                ↓ {totalDettesPeriode} MRU
+                ⏳ {totalDettesPeriode} MRU
               </span>
               <span className="text-[10px] block text-red-600 font-medium">
                 🔴 {t("ventes.dette")}
@@ -311,17 +311,17 @@ function TransactionLine({
           {new Date(transaction.timestamp).toLocaleString("fr-FR")}
         </div>
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-2 shrink-0">
         <button
           onClick={() => setEditing(true)}
-          className="text-xs text-foreground/40 hover:text-primary transition-colors px-1"
+          className="flex items-center justify-center w-11 h-11 rounded-xl text-lg hover:bg-primary/10 transition-colors"
           title={t("ventes.editer")}
         >
           ✏️
         </button>
         <button
           onClick={() => onRequestDelete(transaction.id!)}
-          className="text-xs text-foreground/40 hover:text-danger transition-colors"
+          className="flex items-center justify-center w-11 h-11 rounded-xl text-lg hover:bg-danger/10 transition-colors"
           title={t("ventes.supprimer")}
         >
           🗑️
@@ -455,22 +455,15 @@ function NouvelleVenteModal({
               <h2 className="text-lg font-bold">
                 {step === "produit" ? t("ventes.choisir_produit") : t("ventes.details")}
               </h2>
-              <div className="flex items-center gap-3">
-                {step === "details" && (
-                  <button onClick={handleSubmit} className="text-primary font-semibold text-sm">
-                    ✓ Finaliser
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    resetForm();
-                    setOpen(false);
-                  }}
-                  className="text-foreground/50"
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setOpen(false);
+                }}
+                className="text-foreground/50"
+              >
+                ✕
+              </button>
             </div>
 
             {step === "produit" && (
@@ -655,6 +648,13 @@ function NouvelleVenteModal({
                 <div className="text-center text-lg font-bold mb-4">
                   {t("ventes.total", { total: totalAPayer })}
                 </div>
+
+                <button
+                  onClick={handleSubmit}
+                  className="w-full py-3 bg-primary text-white rounded-xl font-semibold text-base mb-2"
+                >
+                  ✓ {t("ventes.finaliser")}
+                </button>
 
                 <p className="text-center text-xs text-foreground/40">
                   {t("common.appuyer_finaliser")}
