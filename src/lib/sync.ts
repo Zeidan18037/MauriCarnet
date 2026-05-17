@@ -36,7 +36,31 @@ export async function syncPendingUsers(): Promise<void> {
   }
 }
 
+let isSyncing = false;
+let pendingSync = false;
+
 export async function synchroniser(localUserId: number): Promise<{ ok: number; echec: number }> {
+  if (isSyncing) {
+    pendingSync = true;
+    return { ok: 0, echec: 0 };
+  }
+
+  isSyncing = true;
+  pendingSync = false;
+
+  try {
+    const result = await doSync(localUserId);
+    return result;
+  } finally {
+    isSyncing = false;
+    if (pendingSync) {
+      pendingSync = false;
+      return synchroniser(localUserId);
+    }
+  }
+}
+
+async function doSync(localUserId: number): Promise<{ ok: number; echec: number }> {
   const jwt = await getValidJwt();
   if (!jwt) return { ok: 0, echec: 0 };
 
