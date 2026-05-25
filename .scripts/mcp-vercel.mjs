@@ -33,7 +33,7 @@ if (!token) {
 
 const child = spawn(
   'npx',
-  ['-y', 'vercel-mcp-server'],
+  ['-y', 'mcp-remote', 'https://mcp.vercel.com'],
   { stdio: ['pipe', 'pipe', 'pipe'], shell: true, env: { ...process.env, VERCEL_API_TOKEN: token } }
 );
 

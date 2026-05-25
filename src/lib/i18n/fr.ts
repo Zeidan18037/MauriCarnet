@@ -8,6 +8,8 @@ const fr: Record<string, string> = {
   "nav.bottom_mode": "Défaut (bas)",
   "nav.logout": "Déconnexion",
   "nav.logout_confirm": "Se déconnecter ?",
+  "settings.hide_transactions": "Cacher les transactions",
+  "settings.show_transactions": "Afficher les transactions",
 
   "common.finaliser": "Finaliser",
   "common.enregistrer": "Enregistrer",

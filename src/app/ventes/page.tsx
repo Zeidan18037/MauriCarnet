@@ -19,6 +19,7 @@ import {
 } from "@/lib/crud";
 import { useAuth } from "@/contexts/AuthContext";
 import { synchroniser } from "@/lib/sync";
+import { getHidePref } from "@/components/SettingsPanel";
 import type { Produit, Client, Transaction, Categorie } from "@/lib/db";
 
 type FormMode = "new" | "edit";
@@ -42,9 +43,17 @@ export default function VentesPage() {
   const [periode, setPeriode] = useState<Periode>("today");
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
+  const [hideTransactions, setHideTransactions] = useState(true);
   const { t, locale } = useTranslation();
   const { user } = useAuth();
   const uid = user?.id ?? 0;
+
+  useEffect(() => {
+    setHideTransactions(getHidePref());
+    const handler = (e: Event) => setHideTransactions((e as CustomEvent).detail);
+    window.addEventListener("mauricarnet-hide-changed", handler);
+    return () => window.removeEventListener("mauricarnet-hide-changed", handler);
+  }, []);
 
   const charger = async () => {
     if (!uid) return;
@@ -138,7 +147,22 @@ export default function VentesPage() {
     <div className="p-4 pb-24">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">{t("ventes.title")}</h1>
-        <span className="text-sm text-foreground/50">{transactions.length}</span>
+        <div className="flex items-center gap-2">
+          {transactions.length > 0 && (
+            <button
+              onClick={() => {
+                const next = !hideTransactions;
+                setHideTransactions(next);
+                localStorage.setItem("mauricarnet_hide_transactions", String(next));
+                window.dispatchEvent(new CustomEvent("mauricarnet-hide-changed", { detail: next }));
+              }}
+              className="text-xs text-foreground/50 hover:text-foreground transition-colors underline underline-offset-2"
+            >
+              {hideTransactions ? "👁️ " + t("settings.show_transactions") : "👁️‍🗨️ " + t("settings.hide_transactions")}
+            </button>
+          )}
+          <span className="text-sm text-foreground/50">{transactions.length}</span>
+        </div>
       </div>
 
       {produits.length === 0 && (
@@ -214,30 +238,39 @@ export default function VentesPage() {
         </>
       )}
 
-      <div className="flex flex-col gap-2 mt-4">
-        {transactions.map((t) => {
-          const p = mapProduit.get(t.produit_id);
-          const c = t.client_id ? mapClient.get(t.client_id) : null;
-          return (
-            <TransactionLine
-                key={t.id}
-                transaction={t}
-                produit={p}
-                client={c}
-                produits={produits}
-                clients={clients}
-                categories={categories}
-                onUpdate={charger}
-                onRequestDelete={(id) => setDeleteTarget(id)}
-              />
-          );
-        })}
-        {transactions.length === 0 && produits.length > 0 && (
-          <p className="text-center text-foreground/50 py-10">
-            {t("ventes.aucune_transaction")}
-          </p>
-        )}
-      </div>
+      {hideTransactions && transactions.length > 0 && (
+        <div className="text-center py-16">
+          <span className="text-5xl block mb-4">👁️‍🗨️</span>
+          <p className="text-foreground/40 text-sm">{t("ventes.aucune_transaction")}</p>
+        </div>
+      )}
+
+      {!hideTransactions && (
+        <div className="flex flex-col gap-2 mt-4">
+          {transactions.map((t) => {
+            const p = mapProduit.get(t.produit_id);
+            const c = t.client_id ? mapClient.get(t.client_id) : null;
+            return (
+              <TransactionLine
+                  key={t.id}
+                  transaction={t}
+                  produit={p}
+                  client={c}
+                  produits={produits}
+                  clients={clients}
+                  categories={categories}
+                  onUpdate={charger}
+                  onRequestDelete={(id) => setDeleteTarget(id)}
+                />
+            );
+          })}
+          {transactions.length === 0 && produits.length > 0 && (
+            <p className="text-center text-foreground/50 py-10">
+              {t("ventes.aucune_transaction")}
+            </p>
+          )}
+        </div>
+      )}
 
       <ConfirmModal
         open={deleteTarget !== null}

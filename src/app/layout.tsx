@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { NavProvider } from "@/contexts/NavContext";
 import { LocaleProvider } from "@/lib/i18n";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import SettingsButton from "@/components/SettingsButton";
 import SyncProvider from "@/components/SyncProvider";
 import "./globals.css";
 
@@ -64,6 +65,7 @@ export default function RootLayout({
                     {children}
                     <SyncProvider />
                     <ServiceWorkerRegistration />
+                  <SettingsButton />
                   <SwipeNav />
                   <BottomNav />
                   <NavSide />

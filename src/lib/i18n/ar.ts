@@ -8,6 +8,8 @@ const ar: Record<string, string> = {
   "nav.bottom_mode": "أسفل (افتراضي)",
   "nav.logout": "تسجيل الخروج",
   "nav.logout_confirm": "هل تريد تسجيل الخروج؟",
+  "settings.hide_transactions": "إخفاء المعاملات",
+  "settings.show_transactions": "إظهار المعاملات",
 
   "common.finaliser": "إنهاء",
   "common.enregistrer": "حفظ",

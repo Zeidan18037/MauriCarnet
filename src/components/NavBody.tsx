@@ -15,8 +15,8 @@ export default function NavBody({ children }: { children: ReactNode }) {
 
   if (mode === "side") {
     const pad = dir === "rtl" ? "pr-16" : "pl-16";
-    return <div className={`min-h-full flex flex-col ${pad}`}>{children}</div>;
+    return <div className={`min-h-full flex flex-col ${pad} pt-12`}>{children}</div>;
   }
 
-  return <div className="min-h-full flex flex-col pb-20">{children}</div>;
+  return <div className="min-h-full flex flex-col pb-20 pt-12">{children}</div>;
 }
