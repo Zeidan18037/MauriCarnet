@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +31,9 @@ export default function RegisterPage() {
       setError(t("auth.erreur_pin_confirmation"));
       return;
     }
+    setLoading(true);
     const err = await register(username, pin);
+    setLoading(false);
     if (err) setError(err);
     else router.push("/ventes");
   }
@@ -70,9 +73,15 @@ export default function RegisterPage() {
         {error && <p className="text-sm text-danger">{error}</p>}
         <button
           type="submit"
-          className="w-full py-3 bg-primary text-white rounded-xl font-semibold"
+          disabled={loading}
+          className="w-full py-3 bg-primary text-white rounded-xl font-semibold flex items-center justify-center min-h-[48px] disabled:opacity-60"
         >
-          {t("auth.creer_compte")}
+          {loading ? (
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : t("auth.creer_compte")}
         </button>
       </form>
 

@@ -22,7 +22,7 @@ type Periode = "today" | "month" | "year";
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
-  const [periode, setPeriode] = useState<Periode>("today");
+  const [periode, setPeriode] = useState<Periode>("month");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const [nom, setNom] = useState("");

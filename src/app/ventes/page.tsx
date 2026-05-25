@@ -40,7 +40,7 @@ export default function VentesPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [categories, setCategories] = useState<Categorie[]>([]);
   const [loading, setLoading] = useState(true);
-  const [periode, setPeriode] = useState<Periode>("today");
+  const [periode, setPeriode] = useState<Periode>("month");
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
   const [hideTransactions, setHideTransactions] = useState(true);

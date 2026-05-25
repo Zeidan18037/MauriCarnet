@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const [produits, setProduits] = useState<Produit[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [categories, setCategories] = useState<Categorie[]>([]);
-  const [periode, setPeriode] = useState<Periode>("today");
+  const [periode, setPeriode] = useState<Periode>("month");
 
   const { t, locale } = useTranslation();
   const { user } = useAuth();
