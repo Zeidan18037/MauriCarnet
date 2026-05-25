@@ -37,7 +37,6 @@ export default function SettingsPanel({ onClose }: { onClose?: () => void }) {
   }
 
   function handleLogout() {
-    onClose?.();
     setShowLogoutConfirm(true);
   }
 
@@ -83,10 +82,14 @@ export default function SettingsPanel({ onClose }: { onClose?: () => void }) {
         confirmText={t("nav.logout")}
         onConfirm={() => {
           setShowLogoutConfirm(false);
+          onClose?.();
           logout();
           router.push("/auth/login");
         }}
-        onCancel={() => setShowLogoutConfirm(false)}
+        onCancel={() => {
+          setShowLogoutConfirm(false);
+          onClose?.();
+        }}
       />
     </>
   );
