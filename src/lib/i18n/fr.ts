@@ -35,6 +35,7 @@ const fr: Record<string, string> = {
   "common.langue": "Langue",
   "common.confirmer": "Confirmer",
   "common.confirmer_suppression_title": "Confirmer la suppression",
+  "common.ok": "OK",
 
   "dashboard.title": "MauriCarnet",
   "dashboard.subtitle": "Gestion des ventes et du carnet de dettes",

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "@/lib/i18n";
 import ConfirmModal from "@/components/ConfirmModal";
+import AlertModal from "@/components/AlertModal";
 import {
   getClients,
   ajouterClient,
@@ -32,6 +33,7 @@ export default function ClientsPage() {
   const [paiementPartiel, setPaiementPartiel] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
+  const [alertData, setAlertData] = useState<{ icon: string; title: string; message: string } | null>(null);
   const { t } = useTranslation();
   const { user } = useAuth();
   const uid = user?.id ?? 0;
@@ -97,7 +99,7 @@ export default function ClientsPage() {
       await charger();
     } catch (err) {
       console.error("Erreur:", err);
-      alert("Erreur: " + String(err));
+      setAlertData({ icon: "⚠️", title: t("common.erreur"), message: String(err) });
     }
   }
 
@@ -359,13 +361,23 @@ export default function ClientsPage() {
 
       <ConfirmModal
         open={confirmDelete !== null}
+        icon="🗑️"
         title={t("common.confirmer_suppression_title")}
         message={t("common.confirmer_suppression", { item: "client" })}
+        confirmDanger
         onConfirm={async () => {
           if (confirmDelete !== null) await handleSupprimer(confirmDelete);
           setConfirmDelete(null);
         }}
         onCancel={() => setConfirmDelete(null)}
+      />
+
+      <AlertModal
+        open={alertData !== null}
+        icon={alertData?.icon}
+        title={alertData?.title ?? ""}
+        message={alertData?.message ?? ""}
+        onClose={() => setAlertData(null)}
       />
     </div>
   );

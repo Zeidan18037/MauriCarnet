@@ -13,6 +13,8 @@ import {
   getCategorieName,
 } from "@/lib/crud";
 import { useAuth } from "@/contexts/AuthContext";
+import ConfirmModal from "@/components/ConfirmModal";
+import AlertModal from "@/components/AlertModal";
 import type { Produit, Categorie } from "@/lib/db";
 
 export default function ProduitsPage() {
@@ -28,6 +30,8 @@ export default function ProduitsPage() {
   const [prixVente, setPrixVente] = useState("");
   const [stock, setStock] = useState("");
   const [categorieId, setCategorieId] = useState<number | "">("");
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [alertData, setAlertData] = useState<{ icon: string; title: string; message: string } | null>(null);
 
   const charger = async () => {
     if (!uid) return;
@@ -88,18 +92,23 @@ export default function ProduitsPage() {
       await charger();
     } catch (err) {
       console.error("Erreur:", err);
-      alert("Erreur: " + String(err));
+      setAlertData({ icon: "⚠️", title: t("common.erreur"), message: String(err) });
     }
   }
 
   async function handleSupprimer(id: number) {
-    if (!confirm("Supprimer ce produit ?")) return;
+    setDeleteTarget(id);
+  }
+
+  async function doDelete() {
+    if (deleteTarget === null) return;
     try {
-      await supprimerProduit(id);
+      await supprimerProduit(deleteTarget);
       await charger();
     } catch (err) {
       console.error("Erreur suppression:", err);
     }
+    setDeleteTarget(null);
   }
 
   const mapCategorie = new Map(categories.map((c) => [c.id, c]));
@@ -174,6 +183,24 @@ export default function ProduitsPage() {
           </div>
         );
       })}
+
+      <ConfirmModal
+        open={deleteTarget !== null}
+        icon="🗑️"
+        title={t("common.confirmer_suppression_title")}
+        message={t("common.confirmer_suppression", { item: "produit" })}
+        confirmDanger
+        onConfirm={doDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <AlertModal
+        open={alertData !== null}
+        icon={alertData?.icon}
+        title={alertData?.title ?? ""}
+        message={alertData?.message ?? ""}
+        onClose={() => setAlertData(null)}
+      />
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">

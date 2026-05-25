@@ -3,24 +3,18 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/lib/i18n";
 
-export default function ConfirmModal({
+export default function AlertModal({
   open,
   icon,
   title,
   message,
-  confirmText,
-  confirmDanger,
-  onConfirm,
-  onCancel,
+  onClose,
 }: {
   open: boolean;
   icon?: string;
   title: string;
   message: string;
-  confirmText?: string;
-  confirmDanger?: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
+  onClose: () => void;
 }) {
   const [visible, setVisible] = useState(false);
   const { t } = useTranslation();
@@ -39,7 +33,7 @@ export default function ConfirmModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-200"
       style={{ backgroundColor: visible ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)", backdropFilter: visible ? "blur(4px)" : "none" }}
-      onClick={onCancel}
+      onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -51,29 +45,19 @@ export default function ConfirmModal({
       >
         {icon && (
           <div className="flex justify-center mb-4">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-3xl ${confirmDanger ? "bg-red-50" : "bg-amber-50"}`}>
+            <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-3xl">
               {icon}
             </div>
           </div>
         )}
         <h3 className="text-lg font-bold text-center mb-2">{title}</h3>
         <p className="text-sm text-foreground/70 text-center mb-6">{message}</p>
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-3 rounded-xl bg-gray-100 text-foreground font-semibold text-sm hover:bg-gray-200 active:scale-[0.98] transition-all"
-          >
-            {t("common.annuler")}
-          </button>
-          <button
-            onClick={onConfirm}
-            className={`flex-1 py-3 rounded-xl text-white font-semibold text-sm active:scale-[0.98] transition-all ${
-              confirmDanger ? "bg-danger hover:bg-danger/90" : "bg-primary hover:bg-primary/90"
-            }`}
-          >
-            {confirmText || t("common.confirmer")}
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          className="w-full py-3 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 active:scale-[0.98] transition-all"
+        >
+          {t("common.ok") || "OK"}
+        </button>
       </div>
     </div>
   );

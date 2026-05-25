@@ -35,6 +35,7 @@ const ar: Record<string, string> = {
   "common.langue": "اللغة",
   "common.confirmer": "تأكيد",
   "common.confirmer_suppression_title": "تأكيد الحذف",
+  "common.ok": "موافق",
 
   "dashboard.title": "موريكارنيه",
   "dashboard.subtitle": "إدارة المبيعات وسجل الديون",

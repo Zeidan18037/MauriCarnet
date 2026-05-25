@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "@/lib/i18n";
 import ConfirmModal from "@/components/ConfirmModal";
+import AlertModal from "@/components/AlertModal";
 import {
   getProduits,
   getClients,
@@ -274,8 +275,10 @@ export default function VentesPage() {
 
       <ConfirmModal
         open={deleteTarget !== null}
+        icon="🗑️"
         title={t("common.confirmer_suppression_title")}
         message={t("common.confirmer_suppression", { item: "transaction" })}
+        confirmDanger
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
@@ -388,6 +391,7 @@ function NouvelleVenteModal({
   const [clientQuery, setClientQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [alertData, setAlertData] = useState<{ icon: string; title: string; message: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { t, locale } = useTranslation();
   const { user } = useAuth();
@@ -429,15 +433,13 @@ function NouvelleVenteModal({
     if (!selectedProduit) return;
 
     if (type === "dette" && !selectedClient) {
-      alert(t("common.client_requis"));
+      setAlertData({ icon: "👤", title: t("common.client_requis"), message: "" });
       return;
     }
 
     const stockOk = await verifierStock(selectedProduit.id!, quantite);
     if (!stockOk) {
-      alert(
-        t("common.stock_insuffisant", { stock: selectedProduit.stock_actuel, qte: quantite })
-      );
+      setAlertData({ icon: "📦", title: t("common.stock_insuffisant", { stock: selectedProduit.stock_actuel, qte: quantite }), message: "" });
       return;
     }
 
@@ -464,7 +466,7 @@ function NouvelleVenteModal({
       onDone();
     } catch (err) {
       console.error("Erreur ajout transaction:", err);
-      alert("Erreur: " + String(err));
+      setAlertData({ icon: "⚠️", title: t("common.erreur"), message: String(err) });
     }
   }
 
@@ -697,6 +699,14 @@ function NouvelleVenteModal({
           </div>
         </div>
       )}
+
+      <AlertModal
+        open={alertData !== null}
+        icon={alertData?.icon}
+        title={alertData?.title ?? ""}
+        message={alertData?.message ?? ""}
+        onClose={() => setAlertData(null)}
+      />
     </>
   );
 }
