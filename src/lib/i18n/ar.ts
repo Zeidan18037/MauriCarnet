@@ -134,6 +134,11 @@ const ar: Record<string, string> = {
   "dashboard.produits_vendus": "المنتجات المباعة",
   "dashboard.top_produits": "🔥 أفضل المنتجات",
   "dashboard.top_dettes": "👥 الديون الجارية",
+  "dashboard.risque": "درجة المخاطرة",
+  "dashboard.stabilite": "الاستقرار",
+  "dashboard.capital_ajuste": "رأس المال المعدل",
+  "dashboard.probabilite_ruine": "احتمال الإفلاس",
+  "dashboard.notation": "التصنيف",
   "dashboard.aucune_transaction": "لا توجد معاملات في هذه الفترة",
 };
 

@@ -134,6 +134,11 @@ const fr: Record<string, string> = {
   "dashboard.produits_vendus": "Produits vendus",
   "dashboard.top_produits": "🔥 Top produits",
   "dashboard.top_dettes": "👥 Dettes en cours",
+  "dashboard.risque": "Score de Risque",
+  "dashboard.stabilite": "Stabilité",
+  "dashboard.capital_ajuste": "Capital Ajusté",
+  "dashboard.probabilite_ruine": "Prob. de Ruine",
+  "dashboard.notation": "Notation",
   "dashboard.aucune_transaction": "Aucune transaction sur cette période",
 };
 

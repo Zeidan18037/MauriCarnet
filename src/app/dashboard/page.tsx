@@ -12,6 +12,7 @@ import {
 } from "@/lib/crud";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Produit, Client, Transaction, Categorie } from "@/lib/db";
+import { generateRiskReport, type RiskReport } from "@/lib/risk";
 
 type Periode = "today" | "month" | "year";
 
@@ -113,6 +114,24 @@ export default function DashboardPage() {
     [clients]
   );
 
+  const joursDansPeriode = useMemo(
+    () => Math.max(1, Math.round((maintenant.getTime() - debutPeriode.getTime()) / 86_400_000)),
+    [maintenant, debutPeriode]
+  );
+
+  const riskReport = useMemo<RiskReport | null>(() => {
+    const prods = produits;
+    if (prods.length === 0 || totalCash === 0) return null;
+    return generateRiskReport({
+      cash_on_hand: totalCash,
+      daily_profit_avg: Math.round((totalProfit / joursDansPeriode) * 100) / 100,
+      debts_owed_to_shop: totalDettesSolde,
+      estimated_default_rate: 0.15,
+      shock_frequency_days: 30,
+      avg_shock_severity: 4000,
+    });
+  }, [totalCash, totalProfit, totalDettesSolde, joursDansPeriode, produits]);
+
   const PERIODES: { key: Periode; label: string }[] = [
     { key: "today", label: t("clients.jour") },
     { key: "month", label: t("clients.mois") },
@@ -185,7 +204,7 @@ export default function DashboardPage() {
           )}
 
           {topDettes.length > 0 && (
-            <div className="card-soft p-4">
+            <div className="card-soft p-4 mb-4">
               <h2 className="font-bold mb-3">{t("dashboard.top_dettes")}</h2>
               <div className="flex flex-col gap-2">
                 {topDettes.map((c) => (
@@ -197,6 +216,47 @@ export default function DashboardPage() {
                     <span className="text-sm font-bold text-red-600">{c.total_dette} MRU</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {riskReport && (
+            <div className="card-soft p-4">
+              <h2 className="font-bold mb-3">
+                🛡️ {t("dashboard.risque")}
+                <span className={`ml-2 px-2 py-0.5 rounded text-xs font-bold text-white ${
+                  ["AAA","AA"].includes(riskReport.risk_rating) ? "bg-emerald-600" :
+                  ["A","BBB"].includes(riskReport.risk_rating) ? "bg-amber-500" :
+                  ["BB","B"].includes(riskReport.risk_rating) ? "bg-orange-500" :
+                  "bg-red-600"
+                }`}>
+                  {riskReport.risk_rating}
+                </span>
+              </h2>
+              <div className="mb-3">
+                <div className="flex justify-between text-xs text-foreground/60 mb-1">
+                  <span>{t("dashboard.stabilite")}</span>
+                  <span className="font-bold">{riskReport.stability_score} / 100</span>
+                </div>
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      riskReport.stability_score >= 80 ? "bg-emerald-500" :
+                      riskReport.stability_score >= 60 ? "bg-amber-500" :
+                      riskReport.stability_score >= 40 ? "bg-orange-500" :
+                      "bg-red-500"
+                    }`}
+                    style={{ width: `${riskReport.stability_score}%` }}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <span className="text-foreground/60">{t("dashboard.capital_ajuste")}</span>
+                <span className="font-semibold text-right">{riskReport.adjusted_capital.toLocaleString()} MRU</span>
+                <span className="text-foreground/60">{t("dashboard.probabilite_ruine")}</span>
+                <span className="font-semibold text-right">{(riskReport.ruin_probability * 100).toFixed(2)}%</span>
+                <span className="text-foreground/60">{t("dashboard.notation")}</span>
+                <span className="font-bold text-right text-lg">{riskReport.risk_rating}</span>
               </div>
             </div>
           )}
